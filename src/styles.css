@@ -1,27 +1,9 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
-@import "@fontsource/fraunces/400.css";
-@import "@fontsource/fraunces/500.css";
-@import "@fontsource/fraunces/600.css";
-@import "@fontsource/fraunces/700.css";
-@import "@fontsource-variable/dm-sans";
+@import "@govbr-ds/core/dist/core.css";
 
 @custom-variant dark (&:is(.dark *));
-
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -31,8 +13,6 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "DM Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -66,108 +46,133 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-cream: var(--cream);
-  --color-forest: var(--forest);
-  --color-forest-deep: var(--forest-deep);
-  --color-sage: var(--sage);
-  --color-ember: var(--ember);
-  --color-ink: var(--ink);
 }
 
-:root {
-  --radius: 0.5rem;
-  /* Brand palette: forest #1F3A2E, sage #7BA05B, cream #F4F1E8, ember #E85D2F */
-  --cream: oklch(0.955 0.018 88);
-  --forest: oklch(0.32 0.05 152);
-  --forest-deep: oklch(0.22 0.04 152);
-  --sage: oklch(0.68 0.09 130);
-  --ember: oklch(0.66 0.18 38);
-  --ink: oklch(0.18 0.02 150);
-
-  --background: var(--cream);
-  --foreground: var(--ink);
-  --card: oklch(0.985 0.01 88);
-  --card-foreground: var(--ink);
-  --popover: var(--cream);
-  --popover-foreground: var(--ink);
-  --primary: var(--forest);
-  --primary-foreground: var(--cream);
-  --secondary: oklch(0.92 0.025 100);
-  --secondary-foreground: var(--forest-deep);
-  --muted: oklch(0.92 0.02 95);
-  --muted-foreground: oklch(0.42 0.02 150);
-  --accent: var(--ember);
-  --accent-foreground: var(--cream);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.86 0.02 95);
-  --input: oklch(0.86 0.02 95);
-  --ring: var(--forest);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+/* ── apenas scroll suave e resets necessários ── */
+html {
+  scroll-behavior: smooth;
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+/* ── Seções de layout (não sobrescreve componentes do DS) ── */
+.section-hero {
+  background-color: var(--color-primary-darken-02);
+  background-image: linear-gradient(
+    160deg,
+    var(--color-primary-darken-02) 0%,
+    var(--color-primary-darken-01) 60%,
+    var(--color-primary-default) 100%
+  );
+  padding-top: 64px;
+  padding-bottom: 56px;
 }
 
-@layer base {
-  * {
-    border-color: var(--color-border);
-  }
+.section-dark {
+  background-color: var(--color-primary-darken-02);
+}
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
-  }
+.section-light {
+  background-color: var(--color-primary-pastel-02);
+}
 
-  h1, h2, h3, h4 {
-    font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-  }
+.section-accent {
+  background-color: var(--warning, #ffcd07);
+}
+
+/* ── Label de eyebrow ── */
+.section-label {
+  font-size: var(--font-size-scale-down-01);
+  font-weight: var(--font-weight-semi-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--warning, #ffcd07);
+  display: block;
+}
+
+/* ── Stats do hero ── */
+.hero-stat-num {
+  font-size: var(--font-size-scale-up-04);
+  font-weight: var(--font-weight-extra-bold);
+  color: var(--warning, #ffcd07);
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: var(--font-size-scale-down-02);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 4px;
+}
+
+/* ── Mockup WhatsApp ── */
+.hero-mockup {
+  background: var(--pure-0);
+  border-radius: var(--surface-rounder-md);
+  padding: var(--spacing-scale-2x);
+  box-shadow: var(--surface-shadow-md);
+}
+
+/* ── Scroll horizontal do fluxo ── */
+.flow-scroll {
+  display: flex;
+  gap: var(--spacing-scale-3x);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-scale-2x);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.flow-scroll::-webkit-scrollbar { height: 4px; }
+.flow-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 99px;
+}
+
+.flow-card {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: var(--surface-rounder-md);
+  padding: var(--spacing-scale-3x);
+  width: 264px;
+  flex-shrink: 0;
+}
+
+/* ── Citação ── */
+.quote-block {
+  border-left: 4px solid var(--warning, #ffcd07);
+  padding: var(--spacing-scale-base) var(--spacing-scale-3x);
+  font-size: var(--font-size-scale-up-01);
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.65;
+  margin-top: var(--spacing-scale-3x);
+}
+
+/* ── Stats do piloto ── */
+.pilot-stat {
+  border: 1px solid rgba(19, 81, 180, 0.2);
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: var(--surface-rounder-md);
+  padding: var(--spacing-scale-2x) var(--spacing-scale-base);
+  text-align: center;
+}
+
+.pilot-stat-num {
+  font-size: var(--font-size-scale-up-03);
+  font-weight: var(--font-weight-extra-bold);
+  color: var(--color-primary-darken-01);
+  line-height: 1;
+}
+
+.pilot-stat-label {
+  font-size: var(--font-size-scale-down-02);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-secondary-07);
+  margin-top: 4px;
+}
+
+@media (max-width: 767px) {
+  .section-hero { padding-top: 40px; padding-bottom: 36px; }
+  .flow-card { width: 236px; }
 }
