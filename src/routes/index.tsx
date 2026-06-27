@@ -83,7 +83,7 @@ function Nav() {
                 lineHeight: 1,
               }}>
                 <i className="fas fa-rocket" aria-hidden="true" style={{ fontSize: 13 }} />
-                Apresentar piloto
+                <span className="nav-cta-text">Apresentar piloto</span>
               </Link>
             </div>
           </div>
@@ -131,7 +131,7 @@ function Hero() {
               no canal certo, na hora certa.
             </p>
 
-            <div className="mt-5 d-flex flex-wrap" style={{ gap: "var(--spacing-scale-2x)" }}>
+            <div className="cta-buttons mt-5 d-flex flex-wrap" style={{ gap: "var(--spacing-scale-2x)" }}>
               <a href="#funciona" className="br-button primary large">
                 <i className="fas fa-arrow-down mr-2" aria-hidden="true" />
                 Ver como funciona
@@ -269,7 +269,7 @@ function Insight() {
           </h2>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--spacing-scale-3x)", alignItems: "start", marginTop: "var(--spacing-scale-3x)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "var(--spacing-scale-3x)", alignItems: "start", marginTop: "var(--spacing-scale-3x)" }}>
           {points.map((p) => (
             <div key={p.n}>
               <div className="br-card">
@@ -336,8 +336,8 @@ function HowItWorks() {
             <li key={row.k}>
               <div className="br-card">
                 <div className="card-content">
-                  <div className="row align-items-center">
-                    <div className="col-auto">
+                  <div className="row align-items-center step-row">
+                    <div className="col-auto step-row-num">
                       <div style={{
                         width: 40, height: 40, borderRadius: "50%",
                         background: "var(--color-primary-default)",
@@ -349,14 +349,12 @@ function HowItWorks() {
                         {String(i + 1).padStart(2, "0")}
                       </div>
                     </div>
-                    <div className="col-auto">
+                    <div className="col-auto step-row-icon">
                       <i className={`fas ${row.icon}`} style={{ color: "var(--color-primary-default)", fontSize: 20, width: 24, textAlign: "center" }} aria-hidden="true" />
                     </div>
-                    <div className="col-md-3">
-                      <strong style={{ color: "var(--color-secondary-08)" }}>{row.k}</strong>
-                    </div>
-                    <div className="col">
-                      <span style={{ color: "var(--color-secondary-07)" }}>{row.v}</span>
+                    <div className="col step-row-info">
+                      <strong style={{ color: "var(--color-secondary-08)", display: "block" }}>{row.k}</strong>
+                      <span style={{ color: "var(--color-secondary-07)", fontSize: "var(--font-size-scale-down-01)" }}>{row.v}</span>
                     </div>
                   </div>
                 </div>
@@ -419,7 +417,7 @@ function Partners() {
             </p>
           </div>
           <div className="col-md-8">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--spacing-scale-3x)", alignItems: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "var(--spacing-scale-3x)", alignItems: "start" }}>
               {cards.map((c) => (
                 <div key={c.t}>
                   <div className="br-card">

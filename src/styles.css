@@ -175,4 +175,112 @@ html {
 @media (max-width: 767px) {
   .section-hero { padding-top: 40px; padding-bottom: 36px; }
   .flow-card { width: 236px; }
+
+  /* Nav: reduz padding do container no header */
+  .br-header .container-lg {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Seções: menos padding vertical no mobile */
+  .py-5 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+  .py-4 { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+
+  /* Hero / CTA: botões side-by-side viram full-width em mobile */
+  .cta-buttons .br-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Quote block: menos padding lateral */
+  .quote-block {
+    padding-left: var(--spacing-scale-2x);
+    padding-right: var(--spacing-scale-base);
+    font-size: var(--font-size-scale-base);
+  }
+
+  /* Footer links horizontais: empilha em mobile */
+  .br-footer .br-list.horizontal {
+    flex-direction: column;
+  }
+  .br-footer .br-list.horizontal .col-2 {
+    width: 100%;
+  }
+
+  /* Pilot stats: garante que os 3 itens caibam lado a lado */
+  .pilot-stat {
+    padding: var(--spacing-scale-base) 4px;
+  }
+  .pilot-stat-num {
+    font-size: var(--font-size-scale-up-02);
+  }
+
+  /* Busca CPF: botão ocupa largura total quando quebra linha */
+  .search-btn {
+    width: 100%;
+  }
+
+  /* Tab pills: distribuição uniforme */
+  .tab-pill {
+    flex: 1 1 auto;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Step rows (HowItWorks / arquitetura): alinha em mobile */
+  .step-row {
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .step-row-num  { flex: 0 0 auto; }
+  .step-row-icon { flex: 0 0 auto; }
+  .step-row-info { flex: 1 1 auto; min-width: 0; }
+
+  /* DiagnosticResult: código CAR não estoura */
+  .car-code-block {
+    word-break: break-all;
+    font-size: 11px !important;
+  }
+
+  /* Progress sidebar do fluxo: layout horizontal compacto */
+  .progress-sidebar {
+    position: static !important;
+  }
+  .progress-sidebar ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .progress-sidebar li {
+    flex: 1 1 auto;
+    padding: 8px !important;
+    border-bottom: none !important;
+    border: 1px solid var(--color-secondary-03);
+    border-radius: 6px;
+    min-width: 100px;
+    justify-content: center;
+  }
+  .progress-sidebar li .step-label {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Tab strip na piloto: diminui fonte dos botões */
+  .tab-pill {
+    font-size: var(--font-size-scale-down-02) !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Phone mockup: largura total em telas muito pequenas */
+  .phone-mockup-wrap {
+    max-width: 100% !important;
+  }
+
+  /* Nav: esconde texto do botão CTA, mantém só ícone */
+  .nav-cta-text { display: none; }
+
+  /* Hero: stat labels menores */
+  .hero-stat-num { font-size: var(--font-size-scale-up-03); }
 }

@@ -102,6 +102,7 @@ function PilotoPage() {
                   key={t}
                   type="button"
                   onClick={() => setActiveTab(t)}
+                  className="tab-pill"
                   style={{
                     background: active
                       ? "var(--warning, #ffcd07)"
@@ -351,7 +352,7 @@ function DiagnosticEngine({
                 </div>
                 <button
                   type="button"
-                  className="br-button primary"
+                  className="br-button primary search-btn"
                   disabled={!cpf || isLoading}
                   onClick={handleSearch}
                   style={{ borderRadius: 6, minWidth: 160 }}
@@ -503,8 +504,8 @@ function DiagnosticEngine({
               <li key={row.title}>
                 <div className="br-card">
                   <div className="card-content">
-                    <div className="row align-items-center">
-                      <div className="col-auto">
+                    <div className="row align-items-center step-row">
+                      <div className="col-auto step-row-num">
                         <div
                           style={{
                             width: 40,
@@ -523,7 +524,7 @@ function DiagnosticEngine({
                           {String(i + 1).padStart(2, "0")}
                         </div>
                       </div>
-                      <div className="col-auto">
+                      <div className="col-auto step-row-icon">
                         <i
                           className={`fas ${row.icon}`}
                           style={{
@@ -535,13 +536,11 @@ function DiagnosticEngine({
                           aria-hidden="true"
                         />
                       </div>
-                      <div className="col-md-3">
-                        <strong style={{ color: "var(--color-secondary-08)" }}>
+                      <div className="col step-row-info">
+                        <strong style={{ color: "var(--color-secondary-08)", display: "block" }}>
                           {row.title}
                         </strong>
-                      </div>
-                      <div className="col">
-                        <span style={{ color: "var(--color-secondary-07)" }}>
+                        <span style={{ color: "var(--color-secondary-07)", fontSize: "var(--font-size-scale-down-01)" }}>
                           {row.desc}
                         </span>
                       </div>
@@ -623,6 +622,7 @@ function DiagnosticResult({
             </p>
           </div>
           <div
+            className="car-code-block"
             style={{
               fontFamily: "monospace",
               fontSize: "var(--font-size-scale-down-01)",
@@ -630,7 +630,7 @@ function DiagnosticResult({
               background: "var(--color-secondary-02)",
               padding: "6px 14px",
               borderRadius: 6,
-              whiteSpace: "nowrap",
+              wordBreak: "break-all",
             }}
           >
             {p.codigo_car}
@@ -1208,6 +1208,27 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
             <i className="fas fa-lock" aria-hidden="true" />
             <span>Processado localmente via OCR. Não armazenado.</span>
           </div>
+          <button
+            onClick={() => setTimeout(() => setScreen(2), 300)}
+            style={{
+              marginTop: 12,
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              color: "var(--color-primary-default)",
+              fontSize: "0.8125rem",
+              fontWeight: 500,
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+            }}
+          >
+            <i className="fas fa-circle-question" style={{ fontSize: "0.875rem" }} aria-hidden="true" />
+            Não tenho CCIR ou meu CCIR está desatualizado
+          </button>
         </div>
       ),
     },
@@ -1535,7 +1556,7 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
           <div className="row">
             {/* Progress */}
             <div className="col-md-4 mb-5 mb-md-0">
-              <div className="br-card" style={{ position: "sticky", top: 80 }}>
+              <div className="br-card progress-sidebar" style={{ position: "sticky", top: 80 }}>
                 <div className="card-header">
                   <h3
                     className="mb-0"
@@ -1601,6 +1622,7 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
                             )}
                           </div>
                           <span
+                            className="step-label"
                             style={{
                               fontSize: "var(--font-size-scale-down-01)",
                               fontWeight: active ? 700 : 400,
@@ -1623,7 +1645,7 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
 
             {/* Phone mockup */}
             <div className="col-md-8">
-              <div style={{ maxWidth: 360, margin: "0 auto" }}>
+              <div className="phone-mockup-wrap" style={{ maxWidth: 360, margin: "0 auto" }}>
                 <div
                   style={{
                     border: "8px solid var(--color-secondary-09)",
