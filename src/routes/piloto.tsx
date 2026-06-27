@@ -771,33 +771,33 @@ function DiagnosticResult({
 
 // Fallback demo para quando nenhuma consulta foi feita ainda
 const FALLBACK_DIAGNOSTICO: DiagnosticoResult = {
-  cpf: "12345678909",
+  cpf: "10728210100",
   encontrado: true,
   sicar: {
-    codigo_car: "MT-5107925-6F3A2B4C1D8E",
+    codigo_car: "MT-5102504-A4B2C1D8E3F5",
     status: "pendente",
     nome_imovel: "Sítio Boa Esperança",
     area_ha: 48.3,
-    codigo_ibge_municipio: "5107925",
-    nome_municipio: "Sorriso",
+    codigo_ibge_municipio: "5102504",
+    nome_municipio: "Cáceres",
     uf: "MT",
-    data_inscricao: "2018-03-12",
-    data_ultima_atualizacao: "2022-01-15",
-    pendencias: ["CCIR vencido desde 03/2022", "Documento de posse desatualizado"],
-    codigos_sncr: [],
+    data_inscricao: "2019-06-14",
+    data_ultima_atualizacao: "2022-11-08",
+    pendencias: ["CCIR vencido desde 11/2022", "Comprovante de domínio desatualizado"],
+    codigos_sncr: ["9130730239223", "9130730254613"],
     dado_real: false,
   },
-  municipio: { ibge: "5107925", nome: "Sorriso", uf: "MT", nomeUf: "Mato Grosso" },
+  municipio: { ibge: "5102504", nome: "Cáceres", uf: "MT", nomeUf: "Mato Grosso" },
   fontes: [
-    { nome: "SICAR", status: "alerta", descricao: "Dado de demonstração.", dado_real: false },
-    { nome: "INCRA / SIGEF", status: "ok", descricao: "Demo.", dado_real: false },
-    { nome: "MapBiomas", status: "ok", descricao: "Demo.", dado_real: false },
-    { nome: "Receita Federal", status: "ok", descricao: "CPF válido.", dado_real: true },
-    { nome: "IBGE", status: "ok", descricao: "Município enriquecido via API IBGE.", dado_real: true },
+    { nome: "SICAR", status: "alerta", descricao: "Dados de demonstração (credencial pendente).", dado_real: false },
+    { nome: "INCRA / SIGEF", status: "ok", descricao: "Cruzamento fundiário — requer credencial INCRA.", dado_real: false },
+    { nome: "MapBiomas", status: "ok", descricao: "Uso do solo — requer token MapBiomas.", dado_real: false },
+    { nome: "Receita Federal", status: "ok", descricao: "CPF válido pelo algoritmo oficial.", dado_real: true },
+    { nome: "SICAR Municípios", status: "ok", descricao: "Município via API pública SICAR.", dado_real: true },
   ],
   nivel_risco: "medio",
   acao_recomendada: "Atualizar documentação via fluxo guiado",
-  link_resolucao: "https://carproativo.gov.br/resolver?car=MT-5107925-6F3A2B4C1D8E",
+  link_resolucao: "https://carproativo.gov.br/resolver?car=MT-5102504-A4B2C1D8E3F5",
   gerado_em: new Date().toISOString(),
 };
 
@@ -1153,10 +1153,14 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
               border: "2px dashed var(--color-primary-default)",
               borderRadius: 10,
               padding: 32,
-              textAlign: "center",
               background: "var(--color-primary-pastel-01)",
               marginBottom: 16,
               cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
             }}
             onClick={() => setTimeout(() => setScreen(2), 500)}
           >
@@ -1167,6 +1171,8 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
                 color: "var(--color-primary-default)",
                 marginBottom: 10,
                 display: "block",
+                margin: "0 auto 10px",
+                float: "none",
               }}
               aria-hidden="true"
             />

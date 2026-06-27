@@ -49,11 +49,11 @@ export type SicarMunicipio = {
 const DEMO_RECORDS: Record<string, SicarRecord> = {
   // CPF 1 do hackathon — data nasc: 12/12/2002
   "10728210100": {
-    codigo_car: "MT-5103403-A4B2C1D8E3F5",
+    codigo_car: "MT-5102504-A4B2C1D8E3F5",
     status: "pendente",
     nome_imovel: "Sítio Boa Esperança",
     area_ha: 48.3,
-    codigo_ibge_municipio: "5103403",
+    codigo_ibge_municipio: "5102504",
     nome_municipio: "Cáceres",
     uf: "MT",
     data_inscricao: "2019-06-14",
