@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import heroProducer from "@/assets/hero-producer.png";
 import aerialMosaic from "@/assets/aerial-mosaic.jpg";
 import govBrLogo from "@/assets/govbr-logo.svg";
@@ -69,10 +69,22 @@ function Nav() {
               <a href="#piloto" style={{ color: "var(--color-secondary-07)", fontWeight: 600, textDecoration: "none", fontSize: "14px", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primary-default)"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-secondary-07)"}>Piloto</a>
             </nav>
             <div>
-              <a href="#piloto" className="br-button primary small" type="button" style={{ display: "inline-flex", alignItems: "center", height: 32, borderRadius: 4, fontWeight: 600 }}>
-                <i className="fas fa-rocket mr-1" aria-hidden="true" />
+              <Link to="/piloto" style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "var(--color-primary-default)",
+                color: "#fff",
+                borderRadius: 999,
+                padding: "0 18px",
+                height: 36,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
+              }}>
+                <i className="fas fa-rocket" aria-hidden="true" style={{ fontSize: 13 }} />
                 Apresentar piloto
-              </a>
+              </Link>
             </div>
           </div>
         </div>
