@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import govBrLogo from "@/assets/govbr-logo.svg";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDiagnostico } from "../hooks/use-diagnostico";
+import type { DiagnosticoResult } from "../lib/services/diagnostico-engine";
 
 export const Route = createFileRoute("/piloto")({
   head: () => ({
@@ -16,85 +18,44 @@ export const Route = createFileRoute("/piloto")({
   component: PilotoPage,
 });
 
-// ── Mock data ────────────────────────────────────────────────────────────────
+// ── Demo CPFs (válidos pelo algoritmo oficial) ────────────────────────────────
 
-type Producer = {
-  name: string;
-  property: string;
-  city: string;
-  area: string;
-  car: string;
-  status: "regular" | "pendente" | "sobreposição" | "cancelado";
-  issue: string | null;
-  issueDetail: string | null;
-  action: string | null;
-  sources: string[];
-  riskLevel: "nenhum" | "médio" | "alto";
-};
-
-const PRODUCERS: Record<string, Producer> = {
-  "123.456.789-00": {
-    name: "José Aparecido da Silva",
-    property: "Sítio Boa Esperança",
-    city: "Sorriso, MT",
-    area: "48,3 ha",
-    car: "MT-5107800-6F3A2B",
-    status: "pendente",
-    issue: "Documento de posse desatualizado",
-    issueDetail:
-      "O CCIR (Certificado de Cadastro de Imóvel Rural) está vencido desde 03/2022. O sistema cruzou os dados do INCRA e identificou a inconsistência.",
-    action: "Atualizar documento de posse",
-    sources: ["SICAR", "INCRA", "Receita Federal"],
-    riskLevel: "médio",
-  },
-  "987.654.321-00": {
-    name: "Maria das Graças Oliveira",
-    property: "Fazenda Santa Luzia",
-    city: "Primavera do Leste, MT",
-    area: "210 ha",
-    car: "MT-5107040-A9C1D4",
-    status: "sobreposição",
-    issue: "Sobreposição de área detectada",
-    issueDetail:
-      "O polígono declarado no CAR se sobrepõe em 3,2 ha com a Fazenda Três Irmãos (CAR MT-5107040-B2E3F8). Cruzamento com MapBiomas confirmou a sobreposição.",
-    action: "Agendar visita técnica EMATER",
-    sources: ["SICAR", "MapBiomas", "INCRA"],
-    riskLevel: "alto",
-  },
-  "111.222.333-44": {
-    name: "Carlos Roberto Mendes",
-    property: "Chácara Boa Vista",
-    city: "Rondonópolis, MT",
-    area: "12,7 ha",
-    car: "MT-5107602-D5F1A7",
-    status: "regular",
-    issue: null,
-    issueDetail: null,
-    action: null,
-    sources: ["SICAR", "INCRA", "Receita Federal", "MapBiomas"],
-    riskLevel: "nenhum",
-  },
-};
+// CPFs reais do ambiente de testes haCARthon (car-sus.dataprev.gov.br)
+const DEMO_CPFS = [
+  { cpf: "107.282.101-00", label: "Usuário 1 · pendente", hint: "Env. testes SICAR" },
+  { cpf: "287.016.154-91", label: "Usuário 2 · sobreposição", hint: "Env. testes SICAR" },
+  { cpf: "111.222.333-96", label: "Demo · regular", hint: "Dados exemplo" },
+];
 
 const STATUS_COLOR: Record<string, string> = {
   regular: "#2e7d32",
   pendente: "#e65100",
-  sobreposição: "#b71c1c",
+  sobreposicao: "#b71c1c",
   cancelado: "#37474f",
+  nao_encontrado: "#37474f",
 };
 
 const STATUS_ICON: Record<string, string> = {
   regular: "fa-check-circle",
   pendente: "fa-exclamation-triangle",
-  sobreposição: "fa-times-circle",
+  sobreposicao: "fa-times-circle",
   cancelado: "fa-ban",
+  nao_encontrado: "fa-question-circle",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  regular: "regular",
+  pendente: "pendente",
+  sobreposicao: "sobreposição",
+  cancelado: "cancelado",
+  nao_encontrado: "não encontrado",
 };
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 function PilotoPage() {
   const [activeTab, setActiveTab] = useState<"motor" | "api" | "fluxo">("motor");
-  const [producer, setProducer] = useState<Producer | null>(null);
+  const [diagnostico, setDiagnostico] = useState<DiagnosticoResult | null>(null);
 
   return (
     <div>
@@ -169,14 +130,13 @@ function PilotoPage() {
       <div style={{ background: "#fff" }}>
         {activeTab === "motor" && (
           <DiagnosticEngine
-            onResult={setProducer}
+            onResult={setDiagnostico}
             onGoToApi={() => setActiveTab("api")}
             onGoToFluxo={() => setActiveTab("fluxo")}
-            result={producer}
           />
         )}
-        {activeTab === "api" && <ApiDemo producer={producer} />}
-        {activeTab === "fluxo" && <ResolutionFlow producer={producer} />}
+        {activeTab === "api" && <ApiDemo diagnostico={diagnostico} />}
+        {activeTab === "fluxo" && <ResolutionFlow diagnostico={diagnostico} />}
       </div>
 
       <PilotoFooter />
@@ -272,62 +232,26 @@ function PilotoNav() {
 
 // ── 01 · Motor de diagnóstico ────────────────────────────────────────────────
 
-const SCAN_STEPS = [
-  { icon: "fa-database", label: "Consultando SICAR…" },
-  { icon: "fa-map", label: "Cruzando com INCRA…" },
-  { icon: "fa-satellite", label: "Verificando MapBiomas…" },
-  { icon: "fa-id-card", label: "Conferindo Receita Federal…" },
-  { icon: "fa-check-circle", label: "Gerando diagnóstico…" },
-];
-
 function DiagnosticEngine({
   onResult,
   onGoToApi,
   onGoToFluxo,
-  result,
 }: {
-  onResult: (p: Producer | null) => void;
+  onResult: (d: DiagnosticoResult | null) => void;
   onGoToApi: () => void;
   onGoToFluxo: () => void;
-  result: Producer | null;
 }) {
   const [cpf, setCpf] = useState("");
-  const [step, setStep] = useState<"idle" | "scanning" | "done">("idle");
-  const [scanStep, setScanStep] = useState(0);
-  const [notFound, setNotFound] = useState(false);
-  const [localResult, setLocalResult] = useState<Producer | null>(result);
+  const [submittedCpf, setSubmittedCpf] = useState<string | null>(null);
+
+  const { data, isLoading, isError, error } = useDiagnostico(submittedCpf);
+
+  useEffect(() => {
+    if (data) onResult(data);
+  }, [data]);
 
   function handleSearch() {
-    const clean = cpf.replace(/\D/g, "");
-    const formatted = clean.replace(
-      /(\d{3})(\d{3})(\d{3})(\d{2})/,
-      "$1.$2.$3-$4"
-    );
-    const found = PRODUCERS[formatted];
-
-    setNotFound(false);
-    setLocalResult(null);
-    setStep("scanning");
-    setScanStep(0);
-
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setScanStep(i);
-      if (i >= SCAN_STEPS.length) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setStep("done");
-          if (found) {
-            setLocalResult(found);
-            onResult(found);
-          } else {
-            setNotFound(true);
-            onResult(null);
-          }
-        }, 400);
-      }
-    }, 500);
+    setSubmittedCpf(cpf.trim());
   }
 
   return (
@@ -368,10 +292,10 @@ function DiagnosticEngine({
                 }}
               >
                 <i className="fas fa-info-circle mr-2" aria-hidden="true" />
-                CPFs de demonstração disponíveis
+                CPFs de demonstração (clique para preencher)
               </p>
               <div className="d-flex flex-wrap" style={{ gap: 8 }}>
-                {Object.entries(PRODUCERS).map(([c, p]) => (
+                {DEMO_CPFS.map(({ cpf: c, label, hint }) => (
                   <button
                     key={c}
                     type="button"
@@ -385,9 +309,11 @@ function DiagnosticEngine({
                       color: "var(--color-info-default, #155bcb)",
                       cursor: "pointer",
                       fontFamily: "monospace",
+                      textAlign: "left",
                     }}
                   >
-                    {c} · {p.name.split(" ")[0]} ({p.status})
+                    {c} · {label}
+                    <span style={{ display: "block", fontSize: 10, opacity: 0.6, fontFamily: "sans-serif" }}>{hint}</span>
                   </button>
                 ))}
               </div>
@@ -426,7 +352,7 @@ function DiagnosticEngine({
                 <button
                   type="button"
                   className="br-button primary"
-                  disabled={!cpf || step === "scanning"}
+                  disabled={!cpf || isLoading}
                   onClick={handleSearch}
                   style={{ borderRadius: 6, minWidth: 160 }}
                 >
@@ -437,113 +363,55 @@ function DiagnosticEngine({
             </div>
           </div>
 
-          {/* Scanning */}
-          {step === "scanning" && (
+          {/* Loading */}
+          {isLoading && (
             <div className="br-card mb-5">
               <div className="card-content">
-                <p
-                  style={{
-                    fontWeight: 700,
-                    color: "var(--color-secondary-08)",
-                    marginBottom: 20,
-                  }}
-                >
-                  <i
-                    className="fas fa-cog fa-spin mr-2"
-                    style={{ color: "var(--color-primary-default)" }}
-                    aria-hidden="true"
-                  />
+                <p style={{ fontWeight: 700, color: "var(--color-secondary-08)", marginBottom: 20 }}>
+                  <i className="fas fa-cog fa-spin mr-2" style={{ color: "var(--color-primary-default)" }} aria-hidden="true" />
                   Analisando fontes de dados…
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {SCAN_STEPS.map((s, i) => {
-                    const done = i < scanStep;
-                    return (
-                      <div
-                        key={s.label}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 12,
-                          opacity: i < scanStep ? 1 : 0.35,
-                          transition: "opacity 0.3s",
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: "50%",
-                            background: done
-                              ? "var(--color-success-default, #168821)"
-                              : "var(--color-secondary-03)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                            transition: "background 0.3s",
-                          }}
-                        >
-                          <i
-                            className={`fas ${done ? "fa-check" : s.icon}`}
-                            style={{
-                              color: done
-                                ? "var(--pure-0)"
-                                : "var(--color-secondary-06)",
-                              fontSize: 13,
-                            }}
-                            aria-hidden="true"
-                          />
-                        </div>
-                        <span
-                          style={{
-                            color: done
-                              ? "var(--color-secondary-08)"
-                              : "var(--color-secondary-05)",
-                            fontWeight: done ? 600 : 400,
-                            fontSize: "var(--font-size-scale-down-01)",
-                          }}
-                        >
-                          {s.label}
-                        </span>
-                        {done && (
-                          <i
-                            className="fas fa-check"
-                            style={{
-                              color: "var(--color-success-default, #168821)",
-                              marginLeft: "auto",
-                              fontSize: 12,
-                            }}
-                            aria-hidden="true"
-                          />
-                        )}
+                  {[
+                    { icon: "fa-database", label: "Consultando SICAR…" },
+                    { icon: "fa-map", label: "Cruzando com INCRA…" },
+                    { icon: "fa-satellite", label: "Verificando MapBiomas…" },
+                    { icon: "fa-id-card", label: "Conferindo Receita Federal…" },
+                    { icon: "fa-globe", label: "Enriquecendo com IBGE…" },
+                  ].map((s) => (
+                    <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 12, opacity: 0.6 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--color-secondary-03)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <i className={`fas ${s.icon}`} style={{ color: "var(--color-secondary-06)", fontSize: 13 }} aria-hidden="true" />
                       </div>
-                    );
-                  })}
+                      <span style={{ color: "var(--color-secondary-05)", fontSize: "var(--font-size-scale-down-01)" }}>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {isError && (
+            <div className="br-card mb-5" style={{ border: "1px solid #b71c1c", background: "#ffebee" }}>
+              <div className="card-content d-flex align-items-start" style={{ gap: 14 }}>
+                <i className="fas fa-times-circle" style={{ color: "#b71c1c", fontSize: 22, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                <div>
+                  <p style={{ fontWeight: 700, color: "#b71c1c", margin: "0 0 4px" }}>Erro na consulta</p>
+                  <p style={{ color: "#c62828", margin: 0, fontSize: "var(--font-size-scale-down-01)" }}>
+                    {(error as Error)?.message ?? "Erro desconhecido. Verifique o CPF e tente novamente."}
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
           {/* Not found */}
-          {step === "done" && notFound && (
-            <div
-              className="br-card mb-5"
-              style={{ border: "1px solid var(--color-secondary-04)" }}
-            >
+          {data && !data.encontrado && (
+            <div className="br-card mb-5" style={{ border: "1px solid var(--color-secondary-04)" }}>
               <div className="card-content text-center py-5">
-                <i
-                  className="fas fa-user-slash"
-                  style={{
-                    fontSize: 40,
-                    color: "var(--color-secondary-05)",
-                  }}
-                  aria-hidden="true"
-                />
-                <p
-                  className="mt-3"
-                  style={{ color: "var(--color-secondary-07)" }}
-                >
+                <i className="fas fa-user-slash" style={{ fontSize: 40, color: "var(--color-secondary-05)" }} aria-hidden="true" />
+                <p className="mt-3" style={{ color: "var(--color-secondary-07)" }}>
                   CPF não encontrado na base de demonstração.
                   <br />
                   Use um dos CPFs de teste listados acima.
@@ -553,9 +421,9 @@ function DiagnosticEngine({
           )}
 
           {/* Result */}
-          {step === "done" && localResult && (
+          {data?.encontrado && data.sicar && (
             <DiagnosticResult
-              producer={localResult}
+              diagnostico={data}
               onGoToApi={onGoToApi}
               onGoToFluxo={onGoToFluxo}
             />
@@ -690,16 +558,18 @@ function DiagnosticEngine({
 }
 
 function DiagnosticResult({
-  producer: p,
+  diagnostico: d,
   onGoToApi,
   onGoToFluxo,
 }: {
-  producer: Producer;
+  diagnostico: DiagnosticoResult;
   onGoToApi: () => void;
   onGoToFluxo: () => void;
 }) {
-  const color = STATUS_COLOR[p.status];
-  const icon = STATUS_ICON[p.status];
+  const p = d.sicar!;
+  const color = STATUS_COLOR[p.status] ?? "#37474f";
+  const icon = STATUS_ICON[p.status] ?? "fa-question-circle";
+  const label = STATUS_LABEL[p.status] ?? p.status;
 
   return (
     <div
@@ -723,11 +593,7 @@ function DiagnosticResult({
                 marginBottom: 4,
               }}
             >
-              <i
-                className={`fas ${icon}`}
-                style={{ color, fontSize: 18 }}
-                aria-hidden="true"
-              />
+              <i className={`fas ${icon}`} style={{ color, fontSize: 18 }} aria-hidden="true" />
               <span
                 style={{
                   background: color,
@@ -740,26 +606,20 @@ function DiagnosticResult({
                   letterSpacing: "0.08em",
                 }}
               >
-                {p.status}
+                {label}
               </span>
+              {!p.dado_real && (
+                <span style={{ fontSize: "var(--font-size-scale-down-02)", color: "var(--color-secondary-06)", fontStyle: "italic" }}>
+                  · demo
+                </span>
+              )}
             </div>
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "var(--font-size-scale-up-02)",
-                color: "var(--color-secondary-09)",
-              }}
-            >
-              {p.name}
+            <h3 style={{ margin: 0, fontSize: "var(--font-size-scale-up-02)", color: "var(--color-secondary-09)" }}>
+              {p.nome_imovel}
             </h3>
-            <p
-              style={{
-                margin: "4px 0 0",
-                color: "var(--color-secondary-07)",
-                fontSize: "var(--font-size-scale-down-01)",
-              }}
-            >
-              {p.property} · {p.city} · {p.area}
+            <p style={{ margin: "4px 0 0", color: "var(--color-secondary-07)", fontSize: "var(--font-size-scale-down-01)" }}>
+              {d.municipio ? `${d.municipio.nome} — ${d.municipio.nomeUf}` : `${p.nome_municipio}, ${p.uf}`}
+              {" · "}{p.area_ha.toLocaleString("pt-BR")} ha
             </p>
           </div>
           <div
@@ -773,7 +633,7 @@ function DiagnosticResult({
               whiteSpace: "nowrap",
             }}
           >
-            CAR: {p.car}
+            {p.codigo_car}
           </div>
         </div>
       </div>
@@ -793,30 +653,19 @@ function DiagnosticResult({
             >
               Diagnóstico
             </p>
-            {p.issue ? (
+            {p.pendencias.length > 0 ? (
               <>
                 <p style={{ color, fontWeight: 600, margin: "0 0 8px" }}>
-                  {p.issue}
+                  {p.pendencias[0]}
                 </p>
-                <p
-                  style={{
-                    color: "var(--color-secondary-07)",
-                    lineHeight: 1.65,
-                    margin: 0,
-                    fontSize: "var(--font-size-scale-down-01)",
-                  }}
-                >
-                  {p.issueDetail}
-                </p>
+                {p.pendencias.slice(1).map((pen) => (
+                  <p key={pen} style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 4px", fontSize: "var(--font-size-scale-down-01)" }}>
+                    · {pen}
+                  </p>
+                ))}
               </>
             ) : (
-              <p
-                style={{
-                  color: "var(--color-success-default, #168821)",
-                  fontWeight: 600,
-                  margin: 0,
-                }}
-              >
+              <p style={{ color: "var(--color-success-default, #168821)", fontWeight: 600, margin: 0 }}>
                 <i className="fas fa-check-circle mr-2" aria-hidden="true" />
                 CAR regular. Nenhuma ação necessária.
               </p>
@@ -837,25 +686,22 @@ function DiagnosticResult({
               Fontes cruzadas
             </p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-              {p.sources.map((s) => (
-                <li
-                  key={s}
-                  style={{
-                    fontSize: "var(--font-size-scale-down-01)",
-                    color: "var(--color-secondary-07)",
-                    marginBottom: 4,
-                  }}
-                >
+              {d.fontes.map((f) => (
+                <li key={f.nome} style={{ fontSize: "var(--font-size-scale-down-01)", color: "var(--color-secondary-07)", marginBottom: 6, display: "flex", alignItems: "flex-start", gap: 6 }}>
                   <i
-                    className="fas fa-check"
+                    className={`fas ${f.status === "ok" ? "fa-check" : f.status === "alerta" ? "fa-exclamation-triangle" : f.status === "nao_disponivel" ? "fa-clock" : "fa-times"}`}
                     style={{
-                      color: "var(--color-success-default, #168821)",
-                      marginRight: 6,
+                      color: f.status === "ok" ? "var(--color-success-default, #168821)" : f.status === "alerta" ? "#e65100" : "var(--color-secondary-05)",
                       fontSize: 10,
+                      marginTop: 3,
+                      flexShrink: 0,
                     }}
                     aria-hidden="true"
                   />
-                  {s}
+                  <span>
+                    <strong>{f.nome}</strong>
+                    {!f.dado_real && <span style={{ color: "var(--color-secondary-05)", fontStyle: "italic" }}> · demo</span>}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -874,35 +720,17 @@ function DiagnosticResult({
             >
               Ação recomendada
             </p>
-            {p.action ? (
-              <span
-                style={{
-                  display: "inline-block",
-                  background: `${color}12`,
-                  color,
-                  border: `1px solid ${color}40`,
-                  borderRadius: 6,
-                  padding: "6px 12px",
-                  fontWeight: 600,
-                  fontSize: "var(--font-size-scale-down-01)",
-                }}
-              >
-                {p.action}
+            {d.acao_recomendada ? (
+              <span style={{ display: "inline-block", background: `${color}12`, color, border: `1px solid ${color}40`, borderRadius: 6, padding: "6px 12px", fontWeight: 600, fontSize: "var(--font-size-scale-down-01)" }}>
+                {d.acao_recomendada}
               </span>
             ) : (
-              <span
-                style={{
-                  color: "var(--color-secondary-06)",
-                  fontSize: "var(--font-size-scale-down-01)",
-                }}
-              >
-                Nenhuma
-              </span>
+              <span style={{ color: "var(--color-secondary-06)", fontSize: "var(--font-size-scale-down-01)" }}>Nenhuma</span>
             )}
           </div>
         </div>
 
-        {p.status !== "regular" && (
+        {p.status !== "regular" && p.status !== "nao_encontrado" && (
           <div
             className="mt-4 pt-3"
             style={{
@@ -921,7 +749,7 @@ function DiagnosticResult({
               <i className="fas fa-code mr-2" aria-hidden="true" />
               Ver resposta da API
             </button>
-            {p.status !== "sobreposição" && (
+            {p.status !== "sobreposicao" && (
               <button
                 type="button"
                 className="br-button primary small"
@@ -941,32 +769,55 @@ function DiagnosticResult({
 
 // ── 02 · API Demo ────────────────────────────────────────────────────────────
 
-function ApiDemo({ producer }: { producer: Producer | null }) {
-  const p = producer ?? PRODUCERS["123.456.789-00"];
-  const cpfFormatted =
-    Object.keys(PRODUCERS).find((k) => PRODUCERS[k] === p) ??
-    "123.456.789-00";
-  const cpfClean = cpfFormatted.replace(/\D/g, "");
+// Fallback demo para quando nenhuma consulta foi feita ainda
+const FALLBACK_DIAGNOSTICO: DiagnosticoResult = {
+  cpf: "12345678909",
+  encontrado: true,
+  sicar: {
+    codigo_car: "MT-5107925-6F3A2B4C1D8E",
+    status: "pendente",
+    nome_imovel: "Sítio Boa Esperança",
+    area_ha: 48.3,
+    codigo_ibge_municipio: "5107925",
+    nome_municipio: "Sorriso",
+    uf: "MT",
+    data_inscricao: "2018-03-12",
+    data_ultima_atualizacao: "2022-01-15",
+    pendencias: ["CCIR vencido desde 03/2022", "Documento de posse desatualizado"],
+    codigos_sncr: [],
+    dado_real: false,
+  },
+  municipio: { ibge: "5107925", nome: "Sorriso", uf: "MT", nomeUf: "Mato Grosso" },
+  fontes: [
+    { nome: "SICAR", status: "alerta", descricao: "Dado de demonstração.", dado_real: false },
+    { nome: "INCRA / SIGEF", status: "ok", descricao: "Demo.", dado_real: false },
+    { nome: "MapBiomas", status: "ok", descricao: "Demo.", dado_real: false },
+    { nome: "Receita Federal", status: "ok", descricao: "CPF válido.", dado_real: true },
+    { nome: "IBGE", status: "ok", descricao: "Município enriquecido via API IBGE.", dado_real: true },
+  ],
+  nivel_risco: "medio",
+  acao_recomendada: "Atualizar documentação via fluxo guiado",
+  link_resolucao: "https://carproativo.gov.br/resolver?car=MT-5107925-6F3A2B4C1D8E",
+  gerado_em: new Date().toISOString(),
+};
+
+function ApiDemo({ diagnostico }: { diagnostico: DiagnosticoResult | null }) {
+  const d = diagnostico ?? FALLBACK_DIAGNOSTICO;
+  const p = d.sicar!;
 
   const fields = [
-    { key: "cpf", value: cpfClean },
-    { key: "nome", value: p.name },
-    { key: "imovel", value: p.property },
-    { key: "municipio", value: p.city },
-    { key: "car_codigo", value: p.car },
+    { key: "cpf", value: d.cpf },
+    { key: "imovel", value: p.nome_imovel },
+    { key: "municipio", value: d.municipio ? `${d.municipio.nome} — ${d.municipio.nomeUf}` : p.nome_municipio },
+    { key: "car_codigo", value: p.codigo_car },
     { key: "status", value: p.status },
-    { key: "problema", value: p.issue },
-    { key: "acao_recomendada", value: p.action },
-    { key: "nivel_risco", value: p.riskLevel },
-    { key: "fontes_cruzadas", value: p.sources },
-    {
-      key: "link_resolucao",
-      value:
-        p.status !== "regular"
-          ? `https://carproativo.gov.br/resolver?car=${p.car}&token=abc123`
-          : null,
-    },
-    { key: "atualizado_em", value: "2026-06-26T09:14:00Z" },
+    { key: "pendencias", value: p.pendencias },
+    { key: "acao_recomendada", value: d.acao_recomendada },
+    { key: "nivel_risco", value: d.nivel_risco },
+    { key: "fontes_cruzadas", value: d.fontes.map((f) => f.nome) },
+    { key: "link_resolucao", value: d.link_resolucao },
+    { key: "dado_real", value: p.dado_real },
+    { key: "gerado_em", value: d.gerado_em },
   ];
 
   return (
@@ -1031,7 +882,7 @@ function ApiDemo({ producer }: { producer: Producer | null }) {
                       whiteSpace: "pre-wrap",
                       wordBreak: "break-all",
                     }}
-                  >{`GET /v1/car/diagnostico?cpf=${cpfClean}
+                  >{`GET /api/diagnostico?cpf=${d.cpf}
 Authorization: Bearer {token_parceiro}
 Accept: application/json`}</pre>
                 </div>
@@ -1207,13 +1058,11 @@ Accept: application/json`}</pre>
 
 // ── 03 · Resolution Flow ─────────────────────────────────────────────────────
 
-function ResolutionFlow({ producer }: { producer: Producer | null }) {
-  const p =
-    producer &&
-    producer.status !== "regular" &&
-    producer.status !== "sobreposição"
-      ? producer
-      : PRODUCERS["123.456.789-00"];
+function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null }) {
+  const d = diagnostico && diagnostico.sicar?.status !== "regular" && diagnostico.sicar?.status !== "sobreposicao"
+    ? diagnostico
+    : FALLBACK_DIAGNOSTICO;
+  const p = d.sicar!;
 
   const [screen, setScreen] = useState(0);
 
@@ -1245,7 +1094,7 @@ function ResolutionFlow({ producer }: { producer: Producer | null }) {
                 className="fas fa-exclamation-triangle mr-2"
                 aria-hidden="true"
               />
-              {p.issue}
+              {p.pendencias[0] ?? "Pendência identificada"}
             </p>
             <p
               style={{
@@ -1255,7 +1104,7 @@ function ResolutionFlow({ producer }: { producer: Producer | null }) {
                 lineHeight: 1.6,
               }}
             >
-              {p.issueDetail}
+              {p.pendencias.slice(1).join(" · ") || "Verifique a documentação do imóvel."}
             </p>
           </div>
           <p
@@ -1266,7 +1115,7 @@ function ResolutionFlow({ producer }: { producer: Producer | null }) {
               fontSize: "0.875rem",
             }}
           >
-            Seu CAR do <strong>{p.property}</strong> precisa de atenção. Isso
+            Seu CAR do <strong>{p.nome_imovel}</strong> precisa de atenção. Isso
             pode impedir acesso a crédito rural. Vamos resolver agora? Leva
             menos de 5 minutos.
           </p>
@@ -1382,8 +1231,8 @@ function ResolutionFlow({ producer }: { producer: Producer | null }) {
             }}
           >
             {[
-              { label: "Proprietário", value: p.name },
-              { label: "Imóvel", value: p.property },
+              { label: "Imóvel", value: p.nome_imovel },
+              { label: "Município", value: d.municipio ? `${d.municipio.nome}, ${d.municipio.uf}` : p.nome_municipio },
               { label: "CCIR nº", value: "1234567-89" },
               { label: "Validade", value: "03/2027" },
             ].map((row) => (
@@ -1512,7 +1361,7 @@ function ResolutionFlow({ producer }: { producer: Producer | null }) {
                 color: "var(--color-secondary-08)",
               }}
             >
-              INCRA · {p.area}
+              INCRA · {p.area_ha} ha
             </div>
           </div>
           <button
@@ -1578,7 +1427,7 @@ function ResolutionFlow({ producer }: { producer: Producer | null }) {
               fontSize: "0.875rem",
             }}
           >
-            As informações do <strong>{p.property}</strong> foram enviadas ao
+            As informações do <strong>{p.nome_imovel}</strong> foram enviadas ao
             SICAR via módulo oficial de retificação. Confirmação em até{" "}
             <strong>48 horas</strong>.
           </p>
@@ -1653,7 +1502,7 @@ function ResolutionFlow({ producer }: { producer: Producer | null }) {
             </p>
           </div>
 
-          {producer && producer.status === "sobreposição" && (
+          {diagnostico && diagnostico.sicar?.status === "sobreposicao" && (
             <div
               className="br-card mb-5"
               style={{
