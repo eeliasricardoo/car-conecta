@@ -589,11 +589,14 @@ function WhatsappExperience(props: {
   return (
     <div
       style={{
-        height: 780,
+        height: "min(780px, calc(100vh - 120px))",
+        minHeight: 620,
         borderRadius: 36,
         overflow: "hidden",
         background: "#efe7dd",
         position: "relative",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <PhoneStatus />
@@ -603,6 +606,7 @@ function WhatsappExperience(props: {
           background: "#f7f1ea",
           display: "flex",
           alignItems: "center",
+          flexShrink: 0,
           gap: 10,
           padding: "10px 14px",
           borderBottom: "1px solid rgba(0,0,0,0.08)",
@@ -749,12 +753,24 @@ function ChatBody({
   onAction: (action: ChatAction) => void;
   compact?: boolean;
 }) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    scroller.scrollTop = scroller.scrollHeight;
+  }, [messages.length]);
+
   return (
     <div
+      ref={scrollerRef}
       style={{
         flex: 1,
+        minHeight: 0,
         overflowY: "auto",
-        padding: compact ? 18 : "18px 14px 86px",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehavior: "contain",
+        padding: compact ? 18 : "18px 14px",
         background: compact ? "#fff" : "linear-gradient(180deg,#efe7dd,#f6efe8)",
       }}
     >
@@ -852,14 +868,11 @@ function WhatsappComposer({ onPlus }: { onPlus: () => void }) {
   return (
     <div
       style={{
-        position: "absolute",
-        left: 0,
-        right: 0,
-        bottom: 0,
         padding: "10px 12px 14px",
         background: "#f7f1ea",
         display: "flex",
         alignItems: "center",
+        flexShrink: 0,
         gap: 8,
       }}
     >
@@ -969,6 +982,7 @@ function CpfComposer(props: {
         borderTop: "1px solid #edf0f3",
         background: "#fff",
         display: "flex",
+        flexShrink: 0,
         gap: 8,
       }}
     >
@@ -1014,6 +1028,7 @@ function CarComposer(props: {
         borderTop: "1px solid #edf0f3",
         background: "#fff",
         display: "flex",
+        flexShrink: 0,
         gap: 8,
       }}
     >
