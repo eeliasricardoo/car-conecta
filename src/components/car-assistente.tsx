@@ -1,12 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import govBrLogo from "@/assets/govbr-logo.svg";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
 import type { DiagnosticoResult } from "@/lib/services/diagnostico-engine";
@@ -659,73 +652,140 @@ function EmbedExperience(props: {
   onCpfSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onCarSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const [widgetOpen, setWidgetOpen] = useState(true);
+
   return (
     <div
       style={{
-        width: "min(100%, 430px)",
-        background: "#fff",
-        borderRadius: 18,
-        boxShadow: "0 24px 70px rgba(15,23,42,0.18)",
+        width: "min(100%, 620px)",
+        minHeight: 720,
+        background: "#fbf5e6",
+        borderRadius: 28,
+        boxShadow: "0 28px 80px rgba(15,23,42,0.12)",
+        border: "1px solid rgba(15,23,42,0.06)",
+        position: "relative",
         overflow: "hidden",
-        border: "1px solid #dbe3ea",
+        padding: 28,
       }}
     >
-      <div style={{ background: "#00a000", color: "#fff", padding: "18px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <strong style={{ display: "block", fontSize: 20 }}>CAR Assistente</strong>
-            <span style={{ fontSize: 13 }}>Seu facilitador de crédito Rural</span>
+      {widgetOpen && (
+        <div
+          style={{
+            width: "min(100%, 430px)",
+            background: "#fff",
+            borderRadius: 14,
+            boxShadow: "0 18px 46px rgba(15,23,42,0.16)",
+            overflow: "hidden",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <div style={{ background: "#00a000", color: "#fff", padding: "18px 20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <strong style={{ display: "block", fontSize: 20 }}>CAR Assistente</strong>
+                <span style={{ fontSize: 13 }}>Seu facilitador de crédito Rural</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Fechar widget"
+                onClick={() => setWidgetOpen(false)}
+                style={{
+                  border: 0,
+                  background: "rgba(255,255,255,0.18)",
+                  color: "#fff",
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                }}
+              >
+                ×
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            aria-label="Fechar"
-            style={{
-              border: 0,
-              background: "rgba(255,255,255,0.18)",
-              color: "#fff",
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-            }}
+          <div
+            style={{ height: 600, display: "flex", flexDirection: "column", background: "#fff" }}
           >
-            ×
-          </button>
+            <ChatBody messages={props.messages} onAction={props.onAction} compact />
+            {props.cpfInputOpen && (
+              <CpfComposer
+                cpfDraft={props.cpfDraft}
+                checkingCpf={props.checkingCpf}
+                onCpfChange={props.onCpfChange}
+                onCpfSubmit={props.onCpfSubmit}
+              />
+            )}
+            {props.carInputOpen && (
+              <CarComposer
+                carDraft={props.carDraft}
+                checkingCar={props.checkingCar}
+                onCarChange={props.onCarChange}
+                onCarSubmit={props.onCarSubmit}
+              />
+            )}
+            <div style={{ padding: 14, borderTop: "1px solid #edf0f3", background: "#fff" }}>
+              <button
+                type="button"
+                onClick={() => props.onAction("location")}
+                disabled={props.loadingLocation}
+                style={{ ...chatActionButtonStyle, width: "100%", justifyContent: "center" }}
+              >
+                <i
+                  className={`fas ${
+                    props.loadingLocation ? "fa-spinner fa-spin" : "fa-location-arrow"
+                  }`}
+                  aria-hidden="true"
+                />
+                Usar localização do navegador
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div style={{ height: 600, display: "flex", flexDirection: "column", background: "#fff" }}>
-        <ChatBody messages={props.messages} onAction={props.onAction} compact />
-        {props.cpfInputOpen && (
-          <CpfComposer
-            cpfDraft={props.cpfDraft}
-            checkingCpf={props.checkingCpf}
-            onCpfChange={props.onCpfChange}
-            onCpfSubmit={props.onCpfSubmit}
-          />
-        )}
-        {props.carInputOpen && (
-          <CarComposer
-            carDraft={props.carDraft}
-            checkingCar={props.checkingCar}
-            onCarChange={props.onCarChange}
-            onCarSubmit={props.onCarSubmit}
-          />
-        )}
-        <div style={{ padding: 14, borderTop: "1px solid #edf0f3", background: "#fff" }}>
-          <button
-            type="button"
-            onClick={() => props.onAction("location")}
-            disabled={props.loadingLocation}
-            style={{ ...chatActionButtonStyle, width: "100%", justifyContent: "center" }}
-          >
-            <i
-              className={`fas ${props.loadingLocation ? "fa-spinner fa-spin" : "fa-location-arrow"}`}
-              aria-hidden="true"
-            />
-            Usar localização do navegador
-          </button>
-        </div>
-      </div>
+      )}
+      <WidgetLauncher onClick={() => setWidgetOpen(true)} />
     </div>
+  );
+}
+
+function WidgetLauncher({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Abrir widget Crédito Rural"
+      style={{
+        position: "absolute",
+        right: 38,
+        bottom: 34,
+        width: 78,
+        height: 78,
+        border: 0,
+        borderRadius: 20,
+        background: "#34C759",
+        color: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 1,
+        boxShadow: "0 16px 36px rgba(22, 136, 33, 0.26)",
+        cursor: "pointer",
+      }}
+    >
+      <WidgetCoinIcon />
+      <strong style={{ fontSize: 13, lineHeight: 1 }}>Crédito</strong>
+      <strong style={{ fontSize: 13, lineHeight: 1 }}>Rural</strong>
+    </button>
+  );
+}
+
+function WidgetCoinIcon() {
+  return (
+    <svg width="24" height="18" viewBox="0 0 38 28" fill="none" aria-hidden="true">
+      <ellipse cx="19" cy="8" rx="13" ry="6" fill="#FFEA00" />
+      <path d="M6 8v5c0 3.31 5.82 6 13 6s13-2.69 13-6V8" stroke="#FFEA00" strokeWidth="5" />
+      <ellipse cx="19" cy="8" rx="9" ry="3.5" fill="#34C759" opacity="0.55" />
+      <ellipse cx="19" cy="8" rx="13" ry="6" stroke="#FFEA00" strokeWidth="3" />
+    </svg>
   );
 }
 

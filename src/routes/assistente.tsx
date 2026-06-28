@@ -44,7 +44,6 @@ const INSTITUTIONS = [
 
 function AssistentePage() {
   const [profile, setProfile] = useState<Profile>(null);
-  const [widgetOpen, setWidgetOpen] = useState(false);
 
   return (
     <div
@@ -59,8 +58,6 @@ function AssistentePage() {
       {!profile && <ProfileChooser onChoose={setProfile} />}
       {profile === "agricultor" && <FarmerHub />}
       {profile === "parceiro" && <PartnerFlow />}
-      <CreditWidgetButton onClick={() => setWidgetOpen((open) => !open)} />
-      {widgetOpen && <CreditWidgetPanel onClose={() => setWidgetOpen(false)} />}
     </div>
   );
 }
@@ -235,123 +232,6 @@ function ProfileCard({
         </span>
       </span>
     </button>
-  );
-}
-
-function CreditWidgetButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Abrir widget Crédito Rural"
-      style={{
-        position: "fixed",
-        right: 30,
-        bottom: 30,
-        width: 116,
-        height: 116,
-        border: 0,
-        borderRadius: 28,
-        background: "#34C759",
-        padding: 0,
-        zIndex: 50,
-        boxShadow: "0 20px 48px rgba(22, 136, 33, 0.34)",
-        color: "#fff",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 2,
-        cursor: "pointer",
-      }}
-    >
-      <svg width="38" height="28" viewBox="0 0 38 28" fill="none" aria-hidden="true">
-        <ellipse cx="19" cy="8" rx="13" ry="6" fill="#FFEA00" />
-        <path d="M6 8v5c0 3.31 5.82 6 13 6s13-2.69 13-6V8" stroke="#FFEA00" strokeWidth="5" />
-        <ellipse cx="19" cy="8" rx="9" ry="3.5" fill="#34C759" opacity="0.55" />
-        <ellipse cx="19" cy="8" rx="13" ry="6" stroke="#FFEA00" strokeWidth="3" />
-      </svg>
-      <strong style={{ fontSize: 23, lineHeight: 0.98 }}>Crédito</strong>
-      <strong style={{ fontSize: 23, lineHeight: 0.98 }}>Rural</strong>
-    </button>
-  );
-}
-
-function CreditWidgetPanel({ onClose }: { onClose: () => void }) {
-  return (
-    <aside
-      style={{
-        position: "fixed",
-        right: 28,
-        bottom: 160,
-        width: "min(360px, calc(100vw - 32px))",
-        background: "#fff",
-        borderRadius: 16,
-        boxShadow: "0 22px 70px rgba(15,23,42,0.2)",
-        overflow: "hidden",
-        zIndex: 49,
-      }}
-    >
-      <div
-        style={{
-          background: "#00a000",
-          color: "#fff",
-          padding: "16px 18px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <div>
-          <strong style={{ display: "block", fontSize: 18 }}>CAR Assistente</strong>
-          <span style={{ fontSize: 13 }}>Seu facilitador de crédito Rural</span>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fechar widget"
-          style={{
-            border: 0,
-            background: "rgba(255,255,255,0.22)",
-            color: "#fff",
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-          }}
-        >
-          ×
-        </button>
-      </div>
-      <div style={{ padding: 18 }}>
-        <p style={{ ...mutedTextStyle, marginTop: 0 }}>
-          Use este widget em portais parceiros para orientar produtores sobre CAR (Cadastro Ambiental Rural), PRONAF (Programa Nacional de Fortalecimento da Agricultura Familiar) e
-          consultas por localização.
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {["O que é o CAR (Cadastro Ambiental Rural)?", "Como libero o crédito do PRONAF (Programa Nacional de Fortalecimento da Agricultura Familiar)?", "Como o CAR pode me ajudar?"].map(
-            (item) => (
-              <button key={item} type="button" style={chipStyle}>
-                {item}
-              </button>
-            ),
-          )}
-        </div>
-        <div
-          style={{
-            marginTop: 16,
-            border: "1px solid #e5e7eb",
-            borderRadius: 999,
-            padding: "10px 12px",
-            color: "#9ca3af",
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          Digitar...
-          <i className="fas fa-arrow-up" aria-hidden="true" />
-        </div>
-      </div>
-    </aside>
   );
 }
 
@@ -584,7 +464,8 @@ function LocationPanel() {
     <div style={panelStyle}>
       <strong>Envie sua localização</strong>
       <p style={mutedTextStyle}>
-        O sistema identifica município/UF, encontra o código IBGE (Instituto Brasileiro de Geografia e Estatística) e consulta o município na API (Interface de Programação de Aplicações)
+        O sistema identifica município/UF, encontra o código IBGE (Instituto Brasileiro de Geografia
+        e Estatística) e consulta o município na API (Interface de Programação de Aplicações)
         pública do SICAR (Sistema de Cadastro Ambiental Rural).
       </p>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -609,8 +490,8 @@ function LocationPanel() {
         <div style={resultCardStyle}>
           <strong>{result.mensagem}</strong>
           <p style={mutedTextStyle}>
-            {result.municipio_localizacao?.nome}/{result.municipio_localizacao?.uf} · IBGE (Instituto Brasileiro de Geografia e Estatística){" "}
-            {result.municipio_localizacao?.ibge}
+            {result.municipio_localizacao?.nome}/{result.municipio_localizacao?.uf} · IBGE
+            (Instituto Brasileiro de Geografia e Estatística) {result.municipio_localizacao?.ibge}
           </p>
         </div>
       )}
@@ -834,8 +715,9 @@ function PartnerDashboard({ institution }: { institution: string }) {
             Consultas, mapa e widget para atendimento distribuído.
           </h1>
           <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
-            {institution} acessa uma visão operacional para buscar CPF (Cadastro de Pessoas Físicas) em contexto autorizado,
-            visualizar território atendido e gerar um ponto de entrada para o site institucional.
+            {institution} acessa uma visão operacional para buscar CPF (Cadastro de Pessoas Físicas)
+            em contexto autorizado, visualizar território atendido e gerar um ponto de entrada para
+            o site institucional.
           </p>
         </section>
         <div style={surfaceStyle}>
