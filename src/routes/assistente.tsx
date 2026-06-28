@@ -805,46 +805,6 @@ function PartnerFlow() {
   return (
     <main className="container-lg" style={{ padding: "56px 16px 88px" }}>
       <div style={{ width: "100%", maxWidth: 560, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32 }}>
-          {["Solicitação", "Aprovação", "Acesso"].map((label, index) => (
-            <div
-              key={label}
-              style={{ display: "flex", alignItems: "center", flex: index < 2 ? 1 : 0 }}
-            >
-              <div
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
-              >
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    background: index < 2 ? "#168821" : "#1351b4",
-                    color: "#fff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 800,
-                  }}
-                >
-                  {index < 2 ? <i className="fas fa-check" aria-hidden="true" /> : index + 1}
-                </div>
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: index < 2 ? "#168821" : "#1351b4",
-                    fontWeight: 800,
-                  }}
-                >
-                  {label}
-                </span>
-              </div>
-              {index < 2 && (
-                <div style={{ flex: 1, height: 2, background: "#168821", margin: "0 12px 16px" }} />
-              )}
-            </div>
-          ))}
-        </div>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={partnerIconStyle}>
             <i className="fas fa-handshake" aria-hidden="true" />
