@@ -588,7 +588,7 @@ type PortalTab = "consulta" | "assistente" | "piloto" | "painel";
 
 const PORTAL_TABS: { id: PortalTab; label: string; icon: string }[] = [
   { id: "consulta",   label: "Consultar CPF", icon: "fa-search" },
-  { id: "assistente", label: "Assistente CAR", icon: "fa-robot" },
+  { id: "assistente", label: "CAR Proativo", icon: "fa-robot" },
   { id: "piloto",     label: "Fluxo do produtor", icon: "fa-mobile-alt" },
   { id: "painel",     label: "Painel",         icon: "fa-chart-bar" },
 ];

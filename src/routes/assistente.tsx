@@ -8,7 +8,7 @@ import { fetchSicarByCodigo, type SicarRecord } from "@/lib/services/sicar";
 export const Route = createFileRoute("/assistente")({
   head: () => ({
     meta: [
-      { title: "Assistente CAR — Gov.br" },
+      { title: "CAR Proativo — Gov.br" },
       {
         name: "description",
         content:
@@ -312,7 +312,7 @@ function ProfileChooser({ onChoose }: { onChoose: (profile: Profile) => void }) 
           }}
         >
           <div>
-            <span style={eyebrowStyle}>Assistente web replicável</span>
+            <span style={eyebrowStyle}>CAR Proativo replicável</span>
             <h1
               style={{
                 fontSize: "clamp(38px, 5vw, 64px)",

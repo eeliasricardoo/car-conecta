@@ -29,7 +29,7 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome",
     from: "bot",
-    text: "Olá, eu sou o CAR Assistente. Posso te ajudar a entender o CAR, preparar crédito rural e consultar sinais públicos da sua região.",
+    text: "Olá, eu sou o CAR Proativo. Posso te ajudar a entender o CAR, preparar crédito rural e consultar sinais públicos da sua região.",
     actions: [
       { label: "O que é o CAR?", action: "car" },
       { label: "Como conseguir o crédito do PRONAF?", action: "pronaf" },
@@ -347,7 +347,7 @@ export function DemoPage() {
           <div className="container-lg">
             <div className="row align-items-center">
               <div className="col-lg-7">
-                <span style={eyebrowStyle}>CAR Assistente · Demo</span>
+                <span style={eyebrowStyle}>CAR Proativo · Demo</span>
                 <h1
                   style={{
                     margin: "12px 0 16px",
@@ -362,7 +362,7 @@ export function DemoPage() {
                 <p
                   style={{ color: "#4b5563", lineHeight: 1.75, fontSize: "1.05rem", maxWidth: 680 }}
                 >
-                  Simule o CAR Assistente em WhatsApp ou widget web. A experiência mostra perguntas
+                  Simule o CAR Proativo em WhatsApp ou widget web. A experiência mostra perguntas
                   prontas, vídeo educativo, consulta por CPF, localização e bastidores técnicos em
                   tempo real.
                 </p>
@@ -606,7 +606,7 @@ function WhatsappExperience(props: {
           CA
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <strong style={{ color: "#111827", display: "block" }}>CAR Assistente</strong>
+          <strong style={{ color: "#111827", display: "block" }}>CAR Proativo</strong>
           <span style={{ color: "#168821", fontSize: 12 }}>online agora</span>
         </div>
         <i className="fas fa-video" style={{ color: "#374151" }} aria-hidden="true" />
@@ -682,7 +682,7 @@ function EmbedExperience(props: {
           <div style={{ background: "#00a000", color: "#fff", padding: "18px 20px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
-                <strong style={{ display: "block", fontSize: 20 }}>CAR Assistente</strong>
+                <strong style={{ display: "block", fontSize: 20 }}>CAR Proativo</strong>
                 <span style={{ fontSize: 13 }}>Seu facilitador de crédito Rural</span>
               </div>
               <button
