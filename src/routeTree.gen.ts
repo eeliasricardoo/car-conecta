@@ -9,11 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WikiRouteImport } from './routes/wiki'
 import { Route as ResultadosRouteImport } from './routes/resultados'
 import { Route as PilotoRouteImport } from './routes/piloto'
 import { Route as ParceiroRouteImport } from './routes/parceiro'
+import { Route as LocalizacaoRouteImport } from './routes/localizacao'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WikiRoute = WikiRouteImport.update({
+  id: '/wiki',
+  path: '/wiki',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResultadosRoute = ResultadosRouteImport.update({
   id: '/resultados',
   path: '/resultados',
@@ -29,6 +37,16 @@ const ParceiroRoute = ParceiroRouteImport.update({
   path: '/parceiro',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocalizacaoRoute = LocalizacaoRouteImport.update({
+  id: '/localizacao',
+  path: '/localizacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,40 +55,81 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/demo': typeof DemoRoute
+  '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
   '/piloto': typeof PilotoRoute
   '/resultados': typeof ResultadosRoute
+  '/wiki': typeof WikiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/demo': typeof DemoRoute
+  '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
   '/piloto': typeof PilotoRoute
   '/resultados': typeof ResultadosRoute
+  '/wiki': typeof WikiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/demo': typeof DemoRoute
+  '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
   '/piloto': typeof PilotoRoute
   '/resultados': typeof ResultadosRoute
+  '/wiki': typeof WikiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/parceiro' | '/piloto' | '/resultados'
+  fullPaths:
+    | '/'
+    | '/demo'
+    | '/localizacao'
+    | '/parceiro'
+    | '/piloto'
+    | '/resultados'
+    | '/wiki'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/parceiro' | '/piloto' | '/resultados'
-  id: '__root__' | '/' | '/parceiro' | '/piloto' | '/resultados'
+  to:
+    | '/'
+    | '/demo'
+    | '/localizacao'
+    | '/parceiro'
+    | '/piloto'
+    | '/resultados'
+    | '/wiki'
+  id:
+    | '__root__'
+    | '/'
+    | '/demo'
+    | '/localizacao'
+    | '/parceiro'
+    | '/piloto'
+    | '/resultados'
+    | '/wiki'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DemoRoute: typeof DemoRoute
+  LocalizacaoRoute: typeof LocalizacaoRoute
   ParceiroRoute: typeof ParceiroRoute
   PilotoRoute: typeof PilotoRoute
   ResultadosRoute: typeof ResultadosRoute
+  WikiRoute: typeof WikiRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wiki': {
+      id: '/wiki'
+      path: '/wiki'
+      fullPath: '/wiki'
+      preLoaderRoute: typeof WikiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resultados': {
       id: '/resultados'
       path: '/resultados'
@@ -92,6 +151,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/localizacao': {
+      id: '/localizacao'
+      path: '/localizacao'
+      fullPath: '/localizacao'
+      preLoaderRoute: typeof LocalizacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,9 +177,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DemoRoute: DemoRoute,
+  LocalizacaoRoute: LocalizacaoRoute,
   ParceiroRoute: ParceiroRoute,
   PilotoRoute: PilotoRoute,
   ResultadosRoute: ResultadosRoute,
+  WikiRoute: WikiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

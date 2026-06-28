@@ -45,7 +45,8 @@ function buildFontes(sicar: SicarRecord | null): FonteCruzada[] {
   if (sicar) {
     fontes.push({
       nome: "SICAR",
-      status: sicar.status === "regular" ? "ok" : sicar.status === "nao_encontrado" ? "erro" : "alerta",
+      status:
+        sicar.status === "regular" ? "ok" : sicar.status === "nao_encontrado" ? "erro" : "alerta",
       descricao: sicar.dado_real
         ? "Registro obtido do SICAR via API credenciada."
         : "Dados de demonstração (integração SICAR pendente de credencial parceiro).",
@@ -53,11 +54,12 @@ function buildFontes(sicar: SicarRecord | null): FonteCruzada[] {
     });
   }
 
-  // INCRA — aguardando credencial WFS
+  // INCRA/SIGEF — endpoints públicos existem, mas a integração ainda não foi implementada.
   fontes.push({
     nome: "INCRA / SIGEF",
     status: sicar ? (sicar.status === "sobreposicao" ? "alerta" : "ok") : "nao_disponivel",
-    descricao: "Cruzamento de polígono fundiário. Integração via WFS/SIGEF — requer credencial INCRA.",
+    descricao:
+      "Cruzamento de parcela fundiária via endpoints públicos SIGEF/WFS — integração pendente no produto.",
     dado_real: false,
   });
 
@@ -65,7 +67,8 @@ function buildFontes(sicar: SicarRecord | null): FonteCruzada[] {
   fontes.push({
     nome: "MapBiomas",
     status: sicar?.status === "sobreposicao" ? "alerta" : "ok",
-    descricao: "Análise de uso do solo e desmatamento. Integração via API MapBiomas — requer token.",
+    descricao:
+      "Análise de uso do solo e desmatamento. Integração via API MapBiomas — requer token.",
     dado_real: false,
   });
 
@@ -81,7 +84,8 @@ function buildFontes(sicar: SicarRecord | null): FonteCruzada[] {
   fontes.push({
     nome: "SICAR Municípios",
     status: "ok",
-    descricao: "Dados de município obtidos em tempo real via API pública do SICAR (car-sus.dataprev.gov.br).",
+    descricao:
+      "Dados de município obtidos em tempo real via API pública do SICAR (car-sus.dataprev.gov.br).",
     dado_real: true,
   });
 
@@ -91,21 +95,30 @@ function buildFontes(sicar: SicarRecord | null): FonteCruzada[] {
 function calcularRisco(sicar: SicarRecord | null): RiskLevel {
   if (!sicar) return "nenhum";
   switch (sicar.status) {
-    case "regular": return "nenhum";
-    case "pendente": return "medio";
-    case "sobreposicao": return "alto";
-    case "cancelado": return "alto";
-    default: return "baixo";
+    case "regular":
+      return "nenhum";
+    case "pendente":
+      return "medio";
+    case "sobreposicao":
+      return "alto";
+    case "cancelado":
+      return "alto";
+    default:
+      return "baixo";
   }
 }
 
 function acaoRecomendada(sicar: SicarRecord | null): string | null {
   if (!sicar || sicar.status === "regular") return null;
   switch (sicar.status) {
-    case "pendente": return "Atualizar documentação via fluxo guiado";
-    case "sobreposicao": return "Agendar visita técnica EMATER";
-    case "cancelado": return "Solicitar reativação junto ao órgão estadual";
-    default: return "Contatar técnico habilitado";
+    case "pendente":
+      return "Atualizar documentação via fluxo guiado";
+    case "sobreposicao":
+      return "Agendar visita técnica EMATER";
+    case "cancelado":
+      return "Solicitar reativação junto ao órgão estadual";
+    default:
+      return "Contatar técnico habilitado";
   }
 }
 
@@ -113,7 +126,12 @@ export async function gerarDiagnostico(cpf: string): Promise<DiagnosticoResult> 
   const sicar = await fetchSicarByCpf(cpf);
   const municipioSicar = sicar ? await fetchMunicipioByCodigo(sicar.codigo_ibge_municipio) : null;
   const municipio: MunicipioInfo | null = municipioSicar
-    ? { ibge: String(municipioSicar.id), nome: municipioSicar.nome, uf: municipioSicar.estado.id, nomeUf: municipioSicar.estado.nome }
+    ? {
+        ibge: String(municipioSicar.id),
+        nome: municipioSicar.nome,
+        uf: municipioSicar.estado.id,
+        nomeUf: municipioSicar.estado.nome,
+      }
     : null;
 
   const risco = calcularRisco(sicar);
