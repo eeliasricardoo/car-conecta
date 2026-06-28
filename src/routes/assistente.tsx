@@ -47,42 +47,42 @@ const FARMER_ACTIONS: Array<{
   title: string;
   description: string;
   icon: string;
-  emphasis: "primary" | "wide" | "default";
+  variant: "primary" | "secondary";
 }> = [
   {
     panel: "cpf",
     title: "CPF exige login Gov.br",
     description: "Consulta pessoal com autenticação ou contexto autorizado.",
     icon: "fa-id-card",
-    emphasis: "wide",
+    variant: "secondary",
   },
   {
     panel: "localizacao",
     title: "Envie sua localização",
     description: "Cruza coordenadas com município, IBGE e dados públicos da região.",
     icon: "fa-location-arrow",
-    emphasis: "primary",
+    variant: "primary",
   },
   {
     panel: "car",
     title: "Número do CAR",
     description: "Busca demonstrativa por código do imóvel rural.",
     icon: "fa-hashtag",
-    emphasis: "default",
+    variant: "secondary",
   },
   {
     panel: "mapa",
     title: "Encontre no mapa",
     description: "Visualiza a região de atendimento e sinais territoriais.",
     icon: "fa-map",
-    emphasis: "wide",
+    variant: "secondary",
   },
   {
     panel: "novo",
     title: "Não tenho CAR",
     description: "Orienta o caminho oficial para inscrição ou regularização.",
     icon: "fa-file-signature",
-    emphasis: "default",
+    variant: "secondary",
   },
 ];
 
@@ -287,48 +287,50 @@ function ProfileCard({
 
 function FarmerHub() {
   const [panel, setPanel] = useState<FarmerPanel>(null);
-  const activeAction = FARMER_ACTIONS.find((action) => action.panel === panel);
 
   return (
-    <main style={{ padding: "40px 0 80px" }}>
+    <main style={{ padding: "48px 0 80px", background: "var(--color-secondary-01)" }}>
       <div className="container-lg">
-        <section className="br-card" style={{ borderRadius: 8, marginBottom: 24 }}>
-          <span className="br-tag success" style={{ fontWeight: 700 }}>
+        <section style={{ maxWidth: 900, marginBottom: 32 }}>
+          <span className="br-tag success" style={{ fontWeight: 700, marginBottom: 12 }}>
             Experiência do agricultor
           </span>
           <h1
             style={{
-              margin: "16px 0 8px",
+              margin: "12px 0 8px",
               fontSize: "var(--font-size-scale-up-06, 2.5rem)",
               lineHeight: 1.12,
               color: "var(--color-secondary-09)",
-              maxWidth: 820,
             }}
           >
             Conferir CAR e avançar para crédito rural sem perder contexto.
           </h1>
-          <p style={{ ...mutedTextStyle, maxWidth: 760 }}>
+          <p style={{ ...mutedTextStyle, maxWidth: 760, fontSize: 16 }}>
             O produtor escolhe uma necessidade e recebe um caminho guiado. CPF fica sinalizado como
             fluxo com autenticação Gov.br; localização, mapa e número do CAR simulam consultas
             públicas.
           </p>
         </section>
 
-        <div className="br-card" style={{ borderRadius: 8 }}>
-          <div className="assistente-bento">
+        <section className="br-card" style={{ borderRadius: 8, marginBottom: 24 }}>
+          <div className="row">
             {FARMER_ACTIONS.map((action) => (
-              <HubButton
-                key={action.panel}
-                title={action.title}
-                description={action.description}
-                icon={action.icon}
-                emphasis={action.emphasis}
-                active={panel === action.panel}
-                onClick={() => setPanel(action.panel)}
-              />
+              <div key={action.panel} className="col-lg-4 col-md-6 mb-4">
+                <HubActionCard
+                  title={action.title}
+                  description={action.description}
+                  icon={action.icon}
+                  variant={action.variant}
+                  active={panel === action.panel}
+                  onClick={() => setPanel(action.panel)}
+                />
+              </div>
             ))}
           </div>
-          <div style={{ marginTop: 28 }}>
+        </section>
+
+        <section>
+          <div>
             {!panel && <EmptyFarmerState />}
             {panel === "cpf" && <CpfStatusPanel />}
             {panel === "localizacao" && <LocationPanel />}
@@ -336,102 +338,88 @@ function FarmerHub() {
             {panel === "mapa" && <MapPanel audience="agricultor" />}
             {panel === "novo" && <NewCarPanel />}
           </div>
-          {activeAction && (
-            <p style={{ ...mutedTextStyle, marginTop: 16, fontSize: 13 }}>
-              Selecionado: <strong>{activeAction.title}</strong>
-            </p>
-          )}
-        </div>
+        </section>
       </div>
     </main>
   );
 }
 
-function HubButton({
+function HubActionCard({
   title,
   description,
   icon,
-  emphasis,
+  variant,
   active,
   onClick,
 }: {
   title: string;
   description: string;
   icon: string;
-  emphasis: "primary" | "wide" | "default";
+  variant: "primary" | "secondary";
   active: boolean;
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className={`br-card assistente-bento-card assistente-bento-card--${emphasis} ${
-        active ? "selected" : ""
-      }`}
-      onClick={onClick}
+    <article
+      className="br-card"
       style={{
-        minHeight: emphasis === "primary" ? 178 : 148,
+        height: "100%",
+        minHeight: 210,
         borderRadius: 8,
-        border: active
-          ? "2px solid var(--color-primary-default)"
-          : "1px solid var(--color-secondary-04)",
-        borderLeft:
-          emphasis === "primary"
-            ? "6px solid var(--color-success-default, #168821)"
-            : "1px solid var(--color-secondary-04)",
-        background:
-          emphasis === "primary"
-            ? "linear-gradient(135deg, var(--color-primary-pastel-01, #dbe8fb), #fff)"
-            : "#fff",
-        padding: "20px 18px",
-        textAlign: "left",
+        border: active ? "2px solid var(--color-primary-default)" : undefined,
+        boxShadow: active ? "0 0 0 4px var(--color-primary-pastel-01)" : undefined,
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
-        justifyContent: "space-between",
-        gap: 14,
-        color: "var(--color-secondary-09)",
-        boxShadow: active
-          ? "0 0 0 4px var(--color-primary-pastel-01)"
-          : "0 8px 18px rgba(0,0,0,0.06)",
-        cursor: "pointer",
       }}
     >
-      <span
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: "var(--color-primary-pastel-01)",
-          color: "var(--color-primary-default)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <i className={`fas ${icon}`} aria-hidden="true" />
-      </span>
-      <span>
-        <strong style={{ display: "block", fontSize: 18, lineHeight: 1.25 }}>{title}</strong>
-        <span style={{ display: "block", color: "var(--color-secondary-07)", marginTop: 8 }}>
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            background: "var(--color-primary-pastel-01)",
+            color: "var(--color-primary-default)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 16,
+          }}
+        >
+          <i className={`fas ${icon}`} aria-hidden="true" />
+        </div>
+        <h2 style={{ fontSize: 18, lineHeight: 1.25, margin: "0 0 8px" }}>{title}</h2>
+        <p style={{ color: "var(--color-secondary-07)", margin: 0, lineHeight: 1.45 }}>
           {description}
-        </span>
-      </span>
-      <span className={`br-button ${active ? "primary" : "secondary"} small`} aria-hidden="true">
-        Acessar
-      </span>
-    </button>
+        </p>
+      </div>
+      <div style={{ marginTop: 20 }}>
+        <button
+          type="button"
+          className={`br-button ${active || variant === "primary" ? "primary" : "secondary"} small`}
+          onClick={onClick}
+          style={{ borderRadius: 999 }}
+        >
+          Acessar
+        </button>
+      </div>
+    </article>
   );
 }
 
 function EmptyFarmerState() {
   return (
-    <div style={panelStyle}>
-      <strong>Escolha uma solução acima.</strong>
-      <p style={mutedTextStyle}>
-        O hub foi desenhado para deixar claro quais consultas exigem autenticação Gov.br e quais
-        podem usar dados públicos regionais.
-      </p>
+    <div className="br-message info" role="status" style={{ marginBottom: 0 }}>
+      <div className="icon">
+        <i className="fas fa-info-circle" aria-hidden="true" />
+      </div>
+      <div className="content">
+        <span className="message-title">Escolha uma solução acima.</span>
+        <span className="message-body">
+          O hub mostra quais consultas exigem autenticação Gov.br e quais usam dados públicos
+          regionais.
+        </span>
+      </div>
     </div>
   );
 }
@@ -869,17 +857,6 @@ function PartnerDashboard({ institution }: { institution: string }) {
   );
 }
 
-const navPillStyle = {
-  color: "#111827",
-  textDecoration: "none",
-  border: "1px solid rgba(15,23,42,0.12)",
-  borderRadius: 999,
-  padding: "8px 12px",
-  background: "#fff",
-  fontWeight: 800,
-  fontSize: 13,
-} as const;
-
 const eyebrowStyle = {
   display: "inline-flex",
   alignItems: "center",
@@ -967,17 +944,6 @@ const secondaryButtonStyle = {
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
-} as const;
-
-const miniIconStyle = {
-  width: 42,
-  height: 42,
-  borderRadius: 14,
-  background: "#e0f2fe",
-  color: "#1351b4",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 } as const;
 
 const chipStyle = {
