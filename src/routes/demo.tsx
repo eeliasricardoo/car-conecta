@@ -11,6 +11,7 @@ import {
 import govBrLogo from "@/assets/govbr-logo.svg";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
 import type { DiagnosticoResult } from "@/lib/services/diagnostico-engine";
+import { fetchSicarByCodigo } from "@/lib/services/sicar";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -34,7 +35,7 @@ type Message = {
   video?: string;
   actions?: Array<{ label: string; action: ChatAction }>;
 };
-type ChatAction = "car" | "pronaf" | "regular" | "location" | "cpf" | "create";
+type ChatAction = "car" | "pronaf" | "regular" | "location" | "cpf" | "codigoCar" | "create";
 type ConsoleLog = {
   id: string;
   method: string;
@@ -66,8 +67,11 @@ function DemoPage() {
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
   const [plusOpen, setPlusOpen] = useState(false);
   const [cpfInputOpen, setCpfInputOpen] = useState(false);
+  const [carInputOpen, setCarInputOpen] = useState(false);
   const [cpfDraft, setCpfDraft] = useState("107.282.101-00");
+  const [carDraft, setCarDraft] = useState("MT-5102504-A4B2C1D8E3F5");
   const [cpfToCheck, setCpfToCheck] = useState<string | null>(null);
+  const [checkingCar, setCheckingCar] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const handledCpfRef = useRef<string | null>(null);
   const {
@@ -137,7 +141,9 @@ function DemoPage() {
     setLogs([]);
     setPlusOpen(false);
     setCpfInputOpen(false);
+    setCarInputOpen(false);
     setCpfToCheck(null);
+    setCarDraft("MT-5102504-A4B2C1D8E3F5");
     handledCpfRef.current = null;
   }
 
@@ -166,10 +172,17 @@ function DemoPage() {
         text: "Posso consultar de duas formas: você digita um CPF para buscar CARs demonstrativos no seu nome, ou compartilha uma localização para eu consultar dados públicos da região.",
         actions: [
           { label: "Digitar CPF", action: "cpf" },
+          { label: "Digitar Número do CAR", action: "codigoCar" },
           { label: "Enviar localização", action: "location" },
           { label: "Criar/registrar CAR", action: "create" },
         ],
       });
+      return;
+    }
+
+    if (action === "codigoCar") {
+      appendUser("Digitar Número do CAR");
+      setCarInputOpen(true);
       return;
     }
 
@@ -208,6 +221,44 @@ function DemoPage() {
     setCpfInputOpen(false);
     handledCpfRef.current = null;
     setCpfToCheck(cpfDraft);
+  }
+
+  async function submitCarCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const codigo = carDraft.trim().toUpperCase();
+    appendUser(`CAR ${codigo}`);
+    appendBot("Vou procurar esse número de CAR nos registros demonstrativos e trazer o status.");
+    setCarInputOpen(false);
+    setCheckingCar(true);
+
+    appendLog({
+      method: "GET",
+      title: "fetchSicarByCodigo",
+      detail: `Consulta demonstrativa por código CAR ${codigo}`,
+      payload: { codigo_car: codigo },
+    });
+
+    try {
+      const record = await fetchSicarByCodigo(codigo);
+      appendLog({
+        method: "GET",
+        title: "fetchSicarByCodigo",
+        detail: record ? "CAR encontrado nos registros demonstrativos." : "CAR não encontrado.",
+        payload: { codigo_car: codigo },
+        response: record,
+      });
+      appendBot(
+        record
+          ? `Encontrei ${record.nome_imovel}. Status: ${record.status}. Município: ${record.nome_municipio}/${record.uf}. ${
+              record.pendencias.length
+                ? `Pendências: ${record.pendencias.join("; ")}.`
+                : "Nenhuma pendência registrada na demo."
+            }`
+          : "Não encontrei esse número nos registros demonstrativos. Você pode digitar um CPF, enviar localização ou iniciar um novo cadastro.",
+      );
+    } finally {
+      setCheckingCar(false);
+    }
   }
 
   async function callLocationApi(payload: unknown, title: string) {
@@ -388,12 +439,17 @@ function DemoPage() {
                         plusOpen={plusOpen}
                         loadingLocation={loadingLocation}
                         cpfInputOpen={cpfInputOpen}
+                        carInputOpen={carInputOpen}
                         cpfDraft={cpfDraft}
+                        carDraft={carDraft}
                         checkingCpf={checkingCpf}
+                        checkingCar={checkingCar}
                         onAction={handleAction}
                         onLocation={useWhatsappLocation}
                         onCpfChange={setCpfDraft}
+                        onCarChange={setCarDraft}
                         onCpfSubmit={submitCpf}
+                        onCarSubmit={submitCarCode}
                       />
                     </IphoneMockup>
                   ) : (
@@ -401,11 +457,16 @@ function DemoPage() {
                       messages={messages}
                       loadingLocation={loadingLocation}
                       cpfInputOpen={cpfInputOpen}
+                      carInputOpen={carInputOpen}
                       cpfDraft={cpfDraft}
+                      carDraft={carDraft}
                       checkingCpf={checkingCpf}
+                      checkingCar={checkingCar}
                       onAction={handleAction}
                       onCpfChange={setCpfDraft}
+                      onCarChange={setCarDraft}
                       onCpfSubmit={submitCpf}
+                      onCarSubmit={submitCarCode}
                     />
                   )}
                 </div>
@@ -513,12 +574,17 @@ function WhatsappExperience(props: {
   plusOpen: boolean;
   loadingLocation: boolean;
   cpfInputOpen: boolean;
+  carInputOpen: boolean;
   cpfDraft: string;
+  carDraft: string;
   checkingCpf: boolean;
+  checkingCar: boolean;
   onAction: (action: ChatAction) => void;
   onLocation: () => void;
   onCpfChange: (cpf: string) => void;
+  onCarChange: (codigo: string) => void;
   onCpfSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onCarSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
     <div
@@ -573,6 +639,14 @@ function WhatsappExperience(props: {
           onCpfSubmit={props.onCpfSubmit}
         />
       )}
+      {props.carInputOpen && (
+        <CarComposer
+          carDraft={props.carDraft}
+          checkingCar={props.checkingCar}
+          onCarChange={props.onCarChange}
+          onCarSubmit={props.onCarSubmit}
+        />
+      )}
       <WhatsappComposer onPlus={() => props.onAction("location")} />
       {props.plusOpen && (
         <WhatsappMoreSheet loading={props.loadingLocation} onLocation={props.onLocation} />
@@ -585,11 +659,16 @@ function EmbedExperience(props: {
   messages: Message[];
   loadingLocation: boolean;
   cpfInputOpen: boolean;
+  carInputOpen: boolean;
   cpfDraft: string;
+  carDraft: string;
   checkingCpf: boolean;
+  checkingCar: boolean;
   onAction: (action: ChatAction) => void;
   onCpfChange: (cpf: string) => void;
+  onCarChange: (codigo: string) => void;
   onCpfSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onCarSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
     <div
@@ -632,6 +711,14 @@ function EmbedExperience(props: {
             checkingCpf={props.checkingCpf}
             onCpfChange={props.onCpfChange}
             onCpfSubmit={props.onCpfSubmit}
+          />
+        )}
+        {props.carInputOpen && (
+          <CarComposer
+            carDraft={props.carDraft}
+            checkingCar={props.checkingCar}
+            onCarChange={props.onCarChange}
+            onCarSubmit={props.onCarSubmit}
           />
         )}
         <div style={{ padding: 14, borderTop: "1px solid #edf0f3", background: "#fff" }}>
@@ -906,6 +993,51 @@ function CpfComposer(props: {
       >
         <i
           className={`fas ${props.checkingCpf ? "fa-spinner fa-spin" : "fa-paper-plane"}`}
+          aria-hidden="true"
+        />
+      </button>
+    </form>
+  );
+}
+
+function CarComposer(props: {
+  carDraft: string;
+  checkingCar: boolean;
+  onCarChange: (codigo: string) => void;
+  onCarSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <form
+      onSubmit={props.onCarSubmit}
+      style={{
+        padding: "12px 14px",
+        borderTop: "1px solid #edf0f3",
+        background: "#fff",
+        display: "flex",
+        gap: 8,
+      }}
+    >
+      <input
+        value={props.carDraft}
+        onChange={(event) => props.onCarChange(event.target.value)}
+        placeholder="Digite o número do CAR"
+        style={{
+          flex: 1,
+          minWidth: 0,
+          border: "1px solid #d1d5db",
+          borderRadius: 999,
+          height: 40,
+          padding: "0 14px",
+          fontSize: 13,
+        }}
+      />
+      <button
+        type="submit"
+        disabled={props.checkingCar}
+        style={{ ...chatActionButtonStyle, height: 40 }}
+      >
+        <i
+          className={`fas ${props.checkingCar ? "fa-spinner fa-spin" : "fa-paper-plane"}`}
           aria-hidden="true"
         />
       </button>
