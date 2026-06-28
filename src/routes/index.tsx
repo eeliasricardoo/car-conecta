@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import heroProducer from "@/assets/hero-producer.png";
 import aerialMosaic from "@/assets/aerial-mosaic.jpg";
 import govBrLogo from "@/assets/govbr-logo.svg";
+
+const SESSION_KEY = "carproativo_session";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,7 +13,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Uma camada de inteligência sobre o SICAR que entrega o diagnóstico certo, para o produtor certo, no canal que ele já usa.",
+          "Uma camada de inteligência sobre o SICAR (Sistema de Cadastro Ambiental Rural) que entrega o diagnóstico certo, para o produtor certo, no canal que ele já usa.",
       },
       { property: "og:title", content: "CAR Proativo — O CAR que vai até você" },
       {
@@ -43,8 +46,49 @@ function Index() {
 }
 
 function Nav() {
+  const [govbrLoggedIn, setGovbrLoggedIn] = useState(false);
+  useEffect(() => {
+    const step = sessionStorage.getItem(SESSION_KEY + "_step");
+    setGovbrLoggedIn(step === "login" || step === "portal");
+  }, []);
+
   return (
-    <header className="br-header" style={{ background: "#fff", position: "sticky", top: 0, zIndex: 1000, borderBottom: "1px solid var(--color-secondary-03)" }}>
+    <>
+    {govbrLoggedIn && (
+      <div style={{
+        background: "#1351b4", color: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 24px", height: 44, fontSize: 13,
+        fontFamily: "Rawline, sans-serif",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <img
+            src="https://sso.acesso.gov.br/assets/govbr/img/govbr-colorido-b.png"
+            alt="gov.br"
+            style={{ height: 20 }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+          <span style={{ color: "rgba(255,255,255,0.55)" }}>|</span>
+          {["Institucional", "Acessibilidade", "Comunica BR", "Participe"].map((label) => (
+            <span key={label} style={{ color: "rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 12 }}>{label}</span>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "3px 10px", fontSize: 12 }}>
+            <i className="fas fa-th" aria-hidden="true" style={{ fontSize: 11 }} />
+            Atalhos gov.br
+          </div>
+          <Link to="/parceiro" style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff", textDecoration: "none", fontSize: 13 }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#3a3a3a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <i className="fas fa-user" style={{ fontSize: 14, color: "#fff" }} aria-hidden="true" />
+            </div>
+            <span>Olá, <strong>Elias</strong></span>
+            <i className="fas fa-chevron-down" style={{ fontSize: 10, opacity: 0.7 }} aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+    )}
+    <header className="br-header" style={{ background: "#fff", position: "sticky", top: govbrLoggedIn ? 44 : 0, zIndex: 1000, borderBottom: "1px solid var(--color-secondary-03)" }}>
       <div className="container-lg">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 72, gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center" }}>
@@ -87,7 +131,7 @@ function Nav() {
                 <i className="fas fa-sign-in-alt" aria-hidden="true" style={{ fontSize: 12 }} />
                 <span className="d-none d-lg-inline">Portal parceiro</span>
               </Link>
-              <Link to="/piloto" style={{
+              <Link to="/demo" style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 background: "var(--color-primary-default)",
                 color: "#fff",
@@ -108,6 +152,7 @@ function Nav() {
         </div>
       </div>
     </header>
+    </>
   );
 }
 
@@ -127,7 +172,7 @@ function Hero() {
               fontWeight: "var(--font-weight-semi-bold)",
             }}>
               <i className="fas fa-leaf" aria-hidden="true" />
-              Inovação Aberta · SICAR
+              Inovação Aberta · SICAR (Sistema de Cadastro Ambiental Rural)
             </span>
 
             <h1
@@ -162,7 +207,7 @@ function Hero() {
             <div className="mt-5 pt-4" style={{ borderTop: "1px solid var(--color-secondary-03)" }}>
               <div className="row">
                 {[
-                  { k: "7M+", v: "cadastros no SICAR" },
+                  { k: "7M+", v: "cadastros no SICAR (Sistema de Cadastro Ambiental Rural)" },
                   { k: "0", v: "novo canal exigido" },
                   { k: "5", v: "telas até regularizar" },
                 ].map((s) => (
@@ -230,7 +275,7 @@ function Problem() {
           </div>
           <div className="col-md-7 pl-md-5">
             <p style={{ fontSize: "var(--font-size-scale-up-01)", color: "rgba(255,255,255,0.85)", lineHeight: 1.75 }}>
-              O produtor rural não vive no SICAR. Ele vive no WhatsApp da
+              O produtor rural não vive no SICAR (Sistema de Cadastro Ambiental Rural). Ele vive no WhatsApp da
               cooperativa, no aplicativo do banco, na conversa com o técnico
               agrícola. Esses canais já chegam até ele todo mês — e já têm
               interesse direto em que o CAR esteja regular.
@@ -285,7 +330,7 @@ function Fear() {
                   </div>
                   <div className="card-content">
                     <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-                      {["CCIR vencido ou desatualizado", "Dados cadastrais incorretos (área, módulos)", "Documento de domínio com validade expirada", "Polígono desatualizado sem sobreposição"].map(item => (
+                      {["CCIR (Certificado de Cadastro de Imóvel Rural) vencido ou desatualizado", "Dados cadastrais incorretos (área, módulos fiscais)", "Documento de domínio com validade expirada", "Polígono desatualizado sem sobreposição"].map(item => (
                         <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                           <i className="fas fa-circle" style={{ color: "var(--color-success-default, #168821)", fontSize: 5, marginTop: 7, flexShrink: 0 }} aria-hidden="true" />
                           <span style={{ fontSize: "0.8rem", color: "var(--color-secondary-07)", lineHeight: 1.55 }}>{item}</span>
@@ -310,7 +355,7 @@ function Fear() {
                   </div>
                   <div className="card-content">
                     <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-                      {["Sobreposição com APP ou Reserva Legal", "Desmatamento em área protegida", "CAR cancelado por inconsistência grave", "Área irregular que exige PRA"].map(item => (
+                      {["Sobreposição com APP (Área de Preservação Permanente) ou Reserva Legal (RL)", "Desmatamento em área protegida", "CAR (Cadastro Ambiental Rural) cancelado por inconsistência grave", "Área irregular que exige PRA (Programa de Regularização Ambiental)"].map(item => (
                         <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                           <i className="fas fa-circle" style={{ color: "#e65100", fontSize: 5, marginTop: 7, flexShrink: 0 }} aria-hidden="true" />
                           <span style={{ fontSize: "0.8rem", color: "var(--color-secondary-07)", lineHeight: 1.55 }}>{item}</span>
@@ -318,7 +363,7 @@ function Fear() {
                       ))}
                     </ul>
                     <p style={{ margin: "12px 0 0", fontSize: "0.75rem", color: "#e65100", fontWeight: 600 }}>
-                      → Este produtor vai para o técnico da EMATER, informado
+                      → Este produtor vai para o técnico da EMATER (Empresa de Assistência Técnica e Extensão Rural), informado
                     </p>
                   </div>
                 </div>
@@ -352,14 +397,14 @@ function Insight() {
       n: "01",
       icon: "fa-brain",
       t: "Diagnóstico individual",
-      d: "Um motor cruza SICAR, INCRA, MapBiomas e Receita para classificar cada imóvel: regular, pendente, sobreposição, dados desatualizados, cancelado.",
+      d: "Um motor cruza SICAR (Sistema de Cadastro Ambiental Rural), INCRA (Instituto Nacional de Colonização e Reforma Agrária), MapBiomas e Receita para classificar cada imóvel: regular, pendente, sobreposição, dados desatualizados, cancelado.",
       highlight: false,
     },
     {
       n: "02",
       icon: "fa-shield-alt",
       t: "Proteção antes de notificar",
-      d: "O produtor só é notificado quando existe um caminho seguro de resolução. Casos com passivo ambiental nunca caem no automático — vão direto para o técnico da EMATER.",
+      d: "O produtor só é notificado quando existe um caminho seguro de resolução. Casos com passivo ambiental nunca caem no automático — vão direto para o técnico da EMATER (Empresa de Assistência Técnica e Extensão Rural).",
       highlight: false,
     },
     {
@@ -373,7 +418,7 @@ function Insight() {
       n: "04",
       icon: "fa-mobile-alt",
       t: "Resolução em 5 telas",
-      d: "Fluxo guiado mobile-first com OCR de documentos e confirmação de polígono. Cada tipo de pendência tem um fluxo diferente. Sem jargão técnico.",
+      d: "Fluxo guiado mobile-first com OCR (reconhecimento óptico de caracteres) de documentos e confirmação de polígono. Cada tipo de pendência tem um fluxo diferente. Sem jargão técnico.",
       highlight: false,
     },
   ];
@@ -390,7 +435,7 @@ function Insight() {
             Começa pela educação. Termina na regularização.
           </h2>
           <p className="mt-3" style={{ color: "var(--color-secondary-07)", maxWidth: 580, lineHeight: 1.75 }}>
-            Seu Raimundo não sabe o que é SICAR, não sabe que tem pendência e não sabe que isso trava o crédito. A solução começa antes do diagnóstico — começa em explicar, em linguagem simples, o que está em jogo.
+            Seu Raimundo não sabe o que é SICAR (Sistema de Cadastro Ambiental Rural), não sabe que tem pendência e não sabe que isso trava o crédito. A solução começa antes do diagnóstico — começa em explicar, em linguagem simples, o que está em jogo.
           </p>
         </div>
 
@@ -435,12 +480,12 @@ function Insight() {
 function HowItWorks() {
   const steps = [
     { k: "Mídia kit para parceiros", icon: "fa-chalkboard-teacher", v: "Templates prontos em linguagem simples para o parceiro educar Seu Raimundo via WhatsApp, SMS e e-mail — sem precisar criar nada do zero." },
-    { k: "SICAR + bases cruzadas", icon: "fa-database", v: "Motor cruza SICAR, INCRA, MapBiomas e Receita. 7M+ cadastros classificados por situação." },
+    { k: "SICAR (Sistema de Cadastro Ambiental Rural) + bases cruzadas", icon: "fa-database", v: "Motor cruza SICAR, INCRA (Instituto Nacional de Colonização e Reforma Agrária), MapBiomas e Receita. 7M+ cadastros classificados por situação." },
     { k: "Motor de diagnóstico", icon: "fa-cogs", v: "Classifica por imóvel: regular, pendente, sobreposição, dados incorretos, cancelado. Gera ação recomendada em linguagem simples." },
     { k: "Portal do parceiro", icon: "fa-sign-in-alt", v: "Banco ou cooperativa consulta por CPF e vê o diagnóstico na hora. Nenhuma integração técnica necessária." },
     { k: "Notificação no canal certo", icon: "fa-comments", v: "Mensagem chega pelo WhatsApp, app do banco ou e-mail — de quem o produtor já confia, não do governo." },
-    { k: "Fluxo de resolução", icon: "fa-tasks", v: "4 cenários diferentes: documento, sobreposição, cancelado, dados incorretos. OCR, mapa, formulário — tudo no celular." },
-    { k: "Retorno ao SICAR", icon: "fa-check-circle", v: "Dados corrigidos enviados via módulo oficial de retificação. Confirmação em até 48 horas." },
+    { k: "Fluxo de resolução", icon: "fa-tasks", v: "4 cenários diferentes: documento, sobreposição, cancelado, dados incorretos. OCR (reconhecimento óptico de caracteres), mapa, formulário — tudo no celular." },
+    { k: "Retorno ao SICAR (Sistema de Cadastro Ambiental Rural)", icon: "fa-check-circle", v: "Dados corrigidos enviados via módulo oficial de retificação. Confirmação em até 48 horas." },
   ];
 
   return (
@@ -458,7 +503,7 @@ function HowItWorks() {
             className="mt-3 text-weight-bold"
             style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", color: "var(--color-secondary-08)", maxWidth: 680, lineHeight: 1.2 }}
           >
-            Do dado parado no SICAR à ação concluída no celular do produtor.
+            Do dado parado no SICAR (Sistema de Cadastro Ambiental Rural) à ação concluída no celular do produtor.
           </h2>
         </div>
 
@@ -505,20 +550,20 @@ function Partners() {
       icon: "fa-university",
       t: "Bancos e cooperativas",
       ex: "BB · Sicredi · Sicoob · Cresol",
-      why: "CAR regular é pré-requisito para Pronaf e crédito rural. Se o cliente está irregular, o crédito não sai. Interesse direto em regularizar.",
+      why: "CAR (Cadastro Ambiental Rural) regular é pré-requisito para PRONAF (Programa Nacional de Fortalecimento da Agricultura Familiar) e crédito rural. Se o cliente está irregular, o crédito não sai. Interesse direto em regularizar.",
     },
     {
       tag: "Cadeia produtiva",
       icon: "fa-industry",
       t: "Tradings e frigoríficos",
       ex: "Cargill · JBS · Marfrig · SLC",
-      why: "Compromissos ESG e rastreabilidade exigem CAR regular do fornecedor. Já constroem isso internamente — o portal entrega pronto.",
+      why: "Compromissos ESG (Environmental, Social and Governance) e rastreabilidade exigem CAR (Cadastro Ambiental Rural) regular do fornecedor. Já constroem isso internamente — o portal entrega pronto.",
     },
     {
       tag: "Extensão rural",
       icon: "fa-tractor",
-      t: "EMATER e estados",
-      ex: "EMATER · secretarias estaduais",
+      t: "EMATER (Empresa de Assistência Técnica e Extensão Rural) e estados",
+      ex: "EMATER (Empresa de Assistência Técnica e Extensão Rural) · secretarias estaduais",
       why: "Já visitam o produtor e já são o elo de confiança no campo. O portal entrega uma lista de quem precisa de ajuda antes da visita.",
     },
     {
@@ -526,7 +571,7 @@ function Partners() {
       icon: "fa-leaf",
       t: "Secretarias de meio ambiente",
       ex: "Análise estadual do CAR",
-      why: "Quanto mais CARs chegam completos e corretos, menor o backlog. Interesse direto na qualidade do dado de entrada.",
+      why: "Quanto mais CARs (Cadastros Ambientais Rurais) chegam completos e corretos, menor o backlog. Interesse direto na qualidade do dado de entrada.",
     },
   ];
 
@@ -579,9 +624,9 @@ function Partners() {
 function Flow() {
   const screens = [
     { n: 1, icon: "fa-search", t: "Diagnóstico", d: "Seu CAR do Sítio Boa Esperança está com o documento de posse desatualizado. Vamos corrigir?" },
-    { n: 2, icon: "fa-camera", t: "Foto do documento", d: "O produtor tira foto pelo celular. OCR pré-preenche os dados automaticamente." },
+    { n: 2, icon: "fa-camera", t: "Foto do documento", d: "O produtor tira foto pelo celular. OCR (reconhecimento óptico de caracteres) pré-preenche os dados automaticamente." },
     { n: 3, icon: "fa-check", t: "Confirmação", d: "Revisão dos dados extraídos. Um toque para confirmar." },
-    { n: 4, icon: "fa-map-marked-alt", t: "Polígono no mapa", d: "Limite do imóvel pré-carregado do INCRA. Confirmar ou arrastar um ponto." },
+    { n: 4, icon: "fa-map-marked-alt", t: "Polígono no mapa", d: "Limite do imóvel pré-carregado do INCRA (Instituto Nacional de Colonização e Reforma Agrária). Confirmar ou arrastar um ponto." },
     { n: 5, icon: "fa-star", t: "Pronto", d: "CAR atualizado. Confirmação oficial em até 48 horas." },
   ];
 
@@ -626,15 +671,15 @@ function Objections() {
   const qa = [
     {
       q: "O produtor não vai querer — ele tem medo de que o CAR vire um 'mapa do crime'.",
-      a: "É a objeção mais real. Por isso o fluxo só aciona o produtor quando há uma ação simples e segura disponível — documento desatualizado, dado incorreto. Casos com passivo ambiental ou sobreposição não caem no automático: vão para o técnico da EMATER, que já recebe o diagnóstico preparado. O produtor nunca é notificado sem que haja um caminho claro de resolução à frente.",
+      a: "É a objeção mais real. Por isso o fluxo só aciona o produtor quando há uma ação simples e segura disponível — documento desatualizado, dado incorreto. Casos com passivo ambiental ou sobreposição não caem no automático: vão para o técnico da EMATER (Empresa de Assistência Técnica e Extensão Rural), que já recebe o diagnóstico preparado. O produtor nunca é notificado sem que haja um caminho claro de resolução à frente.",
     },
     {
       q: "Agricultura familiar não tem estrutura para usar isso.",
-      a: "Para agricultura familiar o canal é a EMATER e as cooperativas de crédito (Sicoob, Sicredi, Cresol), que já visitam esses produtores e têm interesse direto — o crédito rural só sai com CAR regular. O fluxo mobile-first foi desenhado para funcionar com baixa alfabetização digital: uma ação por tela, sem jargão técnico, com suporte da cooperativa na primeira vez.",
+      a: "Para agricultura familiar o canal é a EMATER (Empresa de Assistência Técnica e Extensão Rural) e as cooperativas de crédito (Sicoob, Sicredi, Cresol), que já visitam esses produtores e têm interesse direto — o crédito rural só sai com CAR (Cadastro Ambiental Rural) regular. O fluxo mobile-first foi desenhado para funcionar com baixa alfabetização digital: uma ação por tela, sem jargão técnico, com suporte da cooperativa na primeira vez.",
     },
     {
       q: "Médios e grandes produtores já têm estrutura — não precisam disso.",
-      a: "Eles precisam, mas por outra razão: rastreabilidade ESG. Tradings como Cargill e JBS já exigem CAR regular de 100% dos fornecedores. O portal entrega essa verificação contínua e automatizada no lugar de auditorias manuais anuais — é argumento de eficiência, não de conformidade.",
+      a: "Eles precisam, mas por outra razão: rastreabilidade ESG (Environmental, Social and Governance). Tradings como Cargill e JBS já exigem CAR (Cadastro Ambiental Rural) regular de 100% dos fornecedores. O portal entrega essa verificação contínua e automatizada no lugar de auditorias manuais anuais — é argumento de eficiência, não de conformidade.",
     },
     {
       q: "O produtor na fronteira agrícola desconfia do Estado — como chega até ele?",
@@ -645,12 +690,12 @@ function Objections() {
       a: "Justamente por isso o fluxo não esconde o problema: mostra o conflito no mapa, explica o que gerou a sobreposição e encaminha para o técnico. O objetivo não é resolver tudo digitalmente — é eliminar os casos simples da fila de análise dos estados, que hoje está represada.",
     },
     {
-      q: "E o PRA? Regularizar o CAR pode gerar custo de recomposição.",
-      a: "CAR e PRA são instrumentos separados. A notificação deixa isso claro: o CAR resolve a pendência cadastral; a adesão ao PRA é uma etapa distinta, com prazos e negociação próprios. O fluxo não promete resolver passivo ambiental — resolve irregularidade cadastral, que é o que trava o crédito hoje.",
+      q: "E o PRA (Programa de Regularização Ambiental)? Regularizar o CAR pode gerar custo de recomposição.",
+      a: "CAR (Cadastro Ambiental Rural) e PRA (Programa de Regularização Ambiental) são instrumentos separados. A notificação deixa isso claro: o CAR resolve a pendência cadastral; a adesão ao PRA é uma etapa distinta, com prazos e negociação próprios. O fluxo não promete resolver passivo ambiental — resolve irregularidade cadastral, que é o que trava o crédito hoje.",
     },
     {
       q: "Por que isso não foi feito antes?",
-      a: "O SICAR foi construído para receber dados, não para distribuir diagnósticos. Não existe API pública de consulta por CPF — requer autenticação Gov.br. A mudança não é técnica, é de governança: conectar quem tem os dados (SICAR) com quem tem o canal (banco, cooperativa). Hackathons de inovação aberta existem exatamente para isso.",
+      a: "O SICAR (Sistema de Cadastro Ambiental Rural) foi construído para receber dados, não para distribuir diagnósticos. Não existe API (Interface de Programação de Aplicações) pública de consulta por CPF (Cadastro de Pessoas Físicas) — requer autenticação Gov.br. A mudança não é técnica, é de governança: conectar quem tem os dados (SICAR) com quem tem o canal (banco, cooperativa). Hackathons de inovação aberta existem exatamente para isso.",
     },
     {
       q: "Isso escala para 7 milhões de cadastros?",
@@ -778,7 +823,7 @@ function SiteFooter() {
             </a>
             <div className="br-list">
               <span className="br-divider d-md-none" />
-              <Link className="br-item" to="/piloto"><div className="content">Demonstração</div></Link>
+              <Link className="br-item" to="/demo"><div className="content">Demonstração</div></Link>
               <Link className="br-item" to="/resultados"><div className="content">Resultados</div></Link>
               <Link className="br-item" to="/parceiro"><div className="content">Portal do parceiro</div></Link>
               <a className="br-item" href="mailto:contato@carproativo.gov.br"><div className="content">Fale conosco</div></a>
@@ -787,7 +832,7 @@ function SiteFooter() {
           </div>
           <div className="col-2">
             <a className="br-item header" href="https://www.car.gov.br" target="_blank" rel="noreferrer">
-              <div className="content text-down-01 text-bold text-uppercase">SICAR</div>
+              <div className="content text-down-01 text-bold text-uppercase">SICAR (Sistema de Cadastro Ambiental Rural)</div>
               <div className="support"><i className="fas fa-angle-down" aria-hidden="true" /></div>
             </a>
             <div className="br-list">
@@ -807,7 +852,7 @@ function SiteFooter() {
               <strong style={{ color: "var(--pure-0)" }}>CAR Proativo</strong> · Proposta de bem público digital
             </p>
             <p style={{ margin: 0, fontSize: "var(--font-size-scale-down-01)", color: "rgba(255,255,255,0.75)" }}>
-              Camada sobre o SICAR — não substitui, amplifica.
+              Camada sobre o SICAR (Sistema de Cadastro Ambiental Rural) — não substitui, amplifica.
             </p>
           </div>
           <div className="d-flex" style={{ gap: "var(--spacing-scale-2x)" }}>

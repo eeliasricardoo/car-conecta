@@ -319,7 +319,7 @@ function LocalizacaoNav() {
             <Link to="/wiki" className="br-button secondary small" style={{ borderRadius: 999 }}>
               Wiki
             </Link>
-            <Link to="/piloto" className="br-button primary small" style={{ borderRadius: 999 }}>
+            <Link to="/demo" className="br-button primary small" style={{ borderRadius: 999 }}>
               Demo
             </Link>
           </nav>

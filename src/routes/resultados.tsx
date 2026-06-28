@@ -41,10 +41,10 @@ const FINAL = CUMULATIVE[CUMULATIVE.length - 1];
 
 const BREAKDOWN = [
   { label: "Documento de posse desatualizado", n: 198, color: "#e65100" },
-  { label: "CCIR vencido", n: 163, color: "#b71c1c" },
+  { label: "CCIR (Certificado de Cadastro de Imóvel Rural) vencido", n: 163, color: "#b71c1c" },
   { label: "Dados cadastrais incompletos", n: 87, color: "#1565c0" },
-  { label: "Área divergente do INCRA", n: 54, color: "#6a1b9a" },
-  { label: "CAR cancelado — reativação possível", n: 26, color: "#37474f" },
+  { label: "Área divergente do INCRA (Instituto Nacional de Colonização e Reforma Agrária)", n: 54, color: "#6a1b9a" },
+  { label: "CAR (Cadastro Ambiental Rural) cancelado — reativação possível", n: 26, color: "#37474f" },
 ];
 
 const SCALE_PROJECTIONS = [
@@ -94,7 +94,7 @@ function ResultadosNav() {
               <i className="fas fa-arrow-left mr-2" aria-hidden="true" style={{ fontSize: 12 }} />
               Apresentação
             </Link>
-            <Link to="/piloto" className="br-button primary small" style={{ borderRadius: 999 }}>
+            <Link to="/demo" className="br-button primary small" style={{ borderRadius: 999 }}>
               <i className="fas fa-flask mr-2" aria-hidden="true" style={{ fontSize: 12 }} />
               Demonstração
             </Link>
@@ -194,7 +194,7 @@ function PilotSummary() {
             {
               icon: "fa-ruler",
               t: "Métricas",
-              d: "Taxa de abertura do link, tempo até início do fluxo, taxa de conclusão do fluxo, e confirmação de retificação no SICAR em até 72h.",
+              d: "Taxa de abertura do link, tempo até início do fluxo, taxa de conclusão do fluxo, e confirmação de retificação no SICAR (Sistema de Cadastro Ambiental Rural) em até 72h.",
             },
           ].map((c) => (
             <div key={c.t} className="br-card">
@@ -392,7 +392,7 @@ function Breakdown() {
                     <tbody>
                       {[
                         { tipo: "Doc. desatualizado", id: 198, res: 171, tx: 86 },
-                        { tipo: "CCIR vencido", id: 163, res: 139, tx: 85 },
+                        { tipo: "CCIR (Certificado de Cadastro de Imóvel Rural) vencido", id: 163, res: 139, tx: 85 },
                         { tipo: "Dados incompletos", id: 87, res: 81, tx: 93 },
                         { tipo: "Área divergente", id: 54, res: 35, tx: 65 },
                         { tipo: "CAR cancelado", id: 26, res: 10, tx: 38 },
@@ -424,7 +424,7 @@ function Breakdown() {
                     Aprendizado do piloto
                   </p>
                   <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.7, margin: 0, fontSize: "var(--font-size-scale-down-01)" }}>
-                    Casos de documento desatualizado e CCIR vencido têm taxa de resolução acima de 85% — exatamente os mais frequentes. Casos de área divergente e CAR cancelado requerem mediação humana e representam apenas 15% do volume. O fluxo automático é suficiente para regularizar 85% dos casos identificados.
+                    Casos de documento desatualizado e CCIR (Certificado de Cadastro de Imóvel Rural) vencido têm taxa de resolução acima de 85% — exatamente os mais frequentes. Casos de área divergente e CAR (Cadastro Ambiental Rural) cancelado requerem mediação humana e representam apenas 15% do volume. O fluxo automático é suficiente para regularizar 85% dos casos identificados.
                   </p>
                 </div>
               </div>
@@ -441,7 +441,7 @@ function Breakdown() {
 function QualitativeResults() {
   const testimonials = [
     {
-      text: "Recebi a mensagem da cooperativa e pensei que era propaganda. Mas cliquei, fiz as 5 telas em 4 minutos e no dia seguinte meu CCIR estava atualizado. Nunca imaginei que ia ser tão fácil.",
+      text: "Recebi a mensagem da cooperativa e pensei que era propaganda. Mas cliquei, fiz as 5 telas em 4 minutos e no dia seguinte meu CCIR (Certificado de Cadastro de Imóvel Rural) estava atualizado. Nunca imaginei que ia ser tão fácil.",
       name: "José Almeida",
       role: "Produtor rural, Cáceres MT · Sítio Boa Esperança · 48 ha",
       icon: "fa-user-tie",
@@ -599,7 +599,7 @@ function NextSteps() {
                 { n: "01", t: "Expansão para 3 cooperativas no MT", d: "Julho–Agosto 2026", icon: "fa-expand-arrows-alt" },
                 { n: "02", t: "Integração com Banco do Brasil e Sicredi", d: "Setembro 2026", icon: "fa-university" },
                 { n: "03", t: "Piloto no Pará e Minas Gerais", d: "Q4 2026", icon: "fa-map" },
-                { n: "04", t: "Protocolo nacional de adesão via MMA", d: "2027", icon: "fa-file-signature" },
+                { n: "04", t: "Protocolo nacional de adesão via MMA (Ministério do Meio Ambiente)", d: "2027", icon: "fa-file-signature" },
                 { n: "05", t: "Cobertura nacional — 7M de cadastros", d: "2028", icon: "fa-globe-americas" },
               ].map((s) => (
                 <li key={s.n} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -625,7 +625,7 @@ function NextSteps() {
             <i className="fas fa-envelope mr-2" aria-hidden="true" />
             Falar com a equipe
           </a>
-          <Link to="/piloto" className="br-button secondary large">
+          <Link to="/demo" className="br-button secondary large">
             <i className="fas fa-flask mr-2" aria-hidden="true" />
             Ver a demonstração técnica
           </Link>
@@ -658,7 +658,7 @@ function ResultadosFooter() {
             <Link to="/" className="br-button circle small inverted" aria-label="Apresentação">
               <i className="fas fa-home" aria-hidden="true" />
             </Link>
-            <Link to="/piloto" className="br-button circle small inverted" aria-label="Demonstração">
+            <Link to="/demo" className="br-button circle small inverted" aria-label="Demonstração">
               <i className="fas fa-flask" aria-hidden="true" />
             </Link>
             <Link to="/parceiro" className="br-button circle small inverted" aria-label="Parceiro">

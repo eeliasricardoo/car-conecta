@@ -36,7 +36,7 @@ const DEMO_CPFS = [
 ];
 
 const INSTITUTIONS = [
-  "EMATER — Mato Grosso",
+  "EMATER (Empresa de Assistência Técnica e Extensão Rural) — Mato Grosso",
   "Sicredi RS",
   "Banco do Brasil — MT",
   "Cargill Grãos",
@@ -324,11 +324,11 @@ function CreditWidgetPanel({ onClose }: { onClose: () => void }) {
       </div>
       <div style={{ padding: 18 }}>
         <p style={{ ...mutedTextStyle, marginTop: 0 }}>
-          Use este widget em portais parceiros para orientar produtores sobre CAR, PRONAF e
+          Use este widget em portais parceiros para orientar produtores sobre CAR (Cadastro Ambiental Rural), PRONAF (Programa Nacional de Fortalecimento da Agricultura Familiar) e
           consultas por localização.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {["O que é o CAR?", "Como libero o crédito do PRONAF?", "Como o CAR pode me ajudar?"].map(
+          {["O que é o CAR (Cadastro Ambiental Rural)?", "Como libero o crédito do PRONAF (Programa Nacional de Fortalecimento da Agricultura Familiar)?", "Como o CAR pode me ajudar?"].map(
             (item) => (
               <button key={item} type="button" style={chipStyle}>
                 {item}
@@ -584,8 +584,8 @@ function LocationPanel() {
     <div style={panelStyle}>
       <strong>Envie sua localização</strong>
       <p style={mutedTextStyle}>
-        O sistema identifica município/UF, encontra o código IBGE e consulta o município na API
-        pública do SICAR.
+        O sistema identifica município/UF, encontra o código IBGE (Instituto Brasileiro de Geografia e Estatística) e consulta o município na API (Interface de Programação de Aplicações)
+        pública do SICAR (Sistema de Cadastro Ambiental Rural).
       </p>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <button
@@ -609,7 +609,7 @@ function LocationPanel() {
         <div style={resultCardStyle}>
           <strong>{result.mensagem}</strong>
           <p style={mutedTextStyle}>
-            {result.municipio_localizacao?.nome}/{result.municipio_localizacao?.uf} · IBGE{" "}
+            {result.municipio_localizacao?.nome}/{result.municipio_localizacao?.uf} · IBGE (Instituto Brasileiro de Geografia e Estatística){" "}
             {result.municipio_localizacao?.ibge}
           </p>
         </div>
@@ -671,7 +671,7 @@ function MapPanel({ audience }: { audience: "agricultor" | "parceiro" }) {
           fontSize: 22,
         }}
       >
-        mapa · Cáceres/MT · SICAR público
+        mapa · Cáceres/MT · SICAR (Sistema de Cadastro Ambiental Rural) público
       </div>
     </div>
   );
@@ -834,7 +834,7 @@ function PartnerDashboard({ institution }: { institution: string }) {
             Consultas, mapa e widget para atendimento distribuído.
           </h1>
           <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
-            {institution} acessa uma visão operacional para buscar CPF em contexto autorizado,
+            {institution} acessa uma visão operacional para buscar CPF (Cadastro de Pessoas Físicas) em contexto autorizado,
             visualizar território atendido e gerar um ponto de entrada para o site institucional.
           </p>
         </section>

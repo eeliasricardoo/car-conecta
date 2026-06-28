@@ -12,6 +12,15 @@
 
 const SICAR_TEST_BASE = "https://car-sus.dataprev.gov.br";
 
+// Dados de município embutidos para os registros demo — evita dependência da API externa
+const DEMO_MUNICIPIOS: Record<string, SicarMunicipio> = {
+  "5102504": { id: 5102504, nome: "Cáceres", estado: { id: "MT", nome: "Mato Grosso", codigoIbge: 51, area: 903206.997 }, moduloFiscal: 65, area: 24701.460 },
+  "5107925": { id: 5107925, nome: "Sorriso", estado: { id: "MT", nome: "Mato Grosso", codigoIbge: 51, area: 903206.997 }, moduloFiscal: 65, area: 9345.110 },
+  "1501402": { id: 1501402, nome: "Belém", estado: { id: "PA", nome: "Pará", codigoIbge: 15, area: 1247955.352 }, moduloFiscal: 70, area: 1059.458 },
+  "5208707": { id: 5208707, nome: "Goiânia", estado: { id: "GO", nome: "Goiás", codigoIbge: 52, area: 340111.783 }, moduloFiscal: 20, area: 740.148 },
+  "5107602": { id: 5107602, nome: "Rondonópolis", estado: { id: "MT", nome: "Mato Grosso", codigoIbge: 51, area: 903206.997 }, moduloFiscal: 65, area: 4159.120 },
+};
+
 export type SicarStatus = "regular" | "pendente" | "sobreposicao" | "cancelado" | "nao_encontrado";
 
 export type SicarRecord = {
@@ -83,8 +92,8 @@ const DEMO_RECORDS: Record<string, SicarRecord> = {
     codigos_sncr: ["2420200634280", "2480450028362", "9500339031245", "9500339031326", "9501737335390"],
     dado_real: false,
   },
-  // CPF 3 — CAR cancelado
-  "32165498700": {
+  // CPF 3 — CAR cancelado (321.654.987-91)
+  "32165498791": {
     codigo_car: "PA-1501402-C3D7E1F4A2B8",
     status: "cancelado",
     nome_imovel: "Sítio Paraíso Verde",
@@ -101,8 +110,8 @@ const DEMO_RECORDS: Record<string, SicarRecord> = {
     codigos_sncr: [],
     dado_real: false,
   },
-  // CPF 4 — dados cadastrais incorretos
-  "55566677789": {
+  // CPF 4 — dados cadastrais incorretos (555.666.777-20)
+  "55566677720": {
     codigo_car: "GO-5208707-A1B3C5D7E9F2",
     status: "pendente",
     nome_imovel: "Fazenda Boa Colheita",
@@ -117,6 +126,25 @@ const DEMO_RECORDS: Record<string, SicarRecord> = {
       "Módulos fiscais não atualizados conforme IN INCRA 82/2015",
     ],
     codigos_sncr: ["3120530021451"],
+    dado_real: false,
+  },
+  // CPF 6 — múltiplas pendências mistas: doc + sobreposição APP (448.903.217-05)
+  "44890321705": {
+    codigo_car: "MS-5003702-B2C4E6A8D1F3",
+    status: "pendente",
+    nome_imovel: "Fazenda Três Irmãos",
+    area_ha: 87.4,
+    codigo_ibge_municipio: "5003702",
+    nome_municipio: "Campo Grande",
+    uf: "MS",
+    data_inscricao: "2018-05-30",
+    data_ultima_atualizacao: "2022-03-14",
+    pendencias: [
+      "CCIR (Certificado de Cadastro de Imóvel Rural) vencido desde 03/2022",
+      "Comprovante de domínio desatualizado",
+      "Sobreposição de 2,1 ha com APP de nascente — requer laudo técnico",
+    ],
+    codigos_sncr: ["7810550043219"],
     dado_real: false,
   },
   // CPF extra para demo — status regular
@@ -176,6 +204,7 @@ export async function fetchEstados(): Promise<SicarEstado[]> {
 
 /** Consulta pública — município por código IBGE (sem autenticação) */
 export async function fetchMunicipioByCodigo(codigoIbge: string): Promise<SicarMunicipio | null> {
+  if (DEMO_MUNICIPIOS[codigoIbge]) return DEMO_MUNICIPIOS[codigoIbge];
   try {
     const res = await fetch(`${SICAR_TEST_BASE}/municipios/byCodigoIbge/${codigoIbge}`);
     if (!res.ok) return null;

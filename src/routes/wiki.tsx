@@ -151,7 +151,7 @@ function WikiNav() {
             </strong>
           </Link>
           <nav className="d-flex" style={{ gap: 8 }}>
-            <Link to="/piloto" className="br-button secondary small" style={{ borderRadius: 999 }}>
+            <Link to="/demo" className="br-button secondary small" style={{ borderRadius: 999 }}>
               Demo
             </Link>
             <Link to="/parceiro" className="br-button primary small" style={{ borderRadius: 999 }}>

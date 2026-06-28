@@ -3,6 +3,8 @@ import govBrLogo from "@/assets/govbr-logo.svg";
 import { useState, useEffect } from "react";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
 import type { DiagnosticoResult } from "@/lib/services/diagnostico-engine";
+import { DemoPage } from "@/components/car-assistente";
+import { PilotoPage } from "@/components/piloto-demo";
 
 export const Route = createFileRoute("/parceiro")({
   head: () => ({
@@ -35,323 +37,418 @@ const INSTITUTIONS: Institution[] = [
 ];
 
 const DEMO_CPFS = [
-  { cpf: "107.282.101-00", label: "Pendente · doc. desatualizado",   hint: "CCIR vencido + domínio" },
-  { cpf: "287.016.154-91", label: "Sobreposição · APP + RL",         hint: "Conflito de polígono" },
-  { cpf: "321.654.987-00", label: "Cancelado · requer reativação",   hint: "Inconsistência de domínio" },
-  { cpf: "555.666.777-89", label: "Pendente · dados incorretos",     hint: "Área divergente" },
+  { cpf: "107.282.101-00", label: "Pendente · doc. desatualizado",   hint: "CCIR (Certificado de Cadastro de Imóvel Rural) vencido + domínio" },
+  { cpf: "287.016.154-91", label: "Sobreposição · APP (Área de Preservação Permanente) + RL (Reserva Legal)", hint: "Conflito de polígono" },
+  { cpf: "321.654.987-91", label: "Cancelado · requer reativação",   hint: "Inconsistência de domínio" },
+  { cpf: "555.666.777-20", label: "Pendente · dados incorretos",     hint: "Área divergente" },
   { cpf: "111.222.333-96", label: "Regular · nenhuma ação",          hint: "CAR em dia" },
+  { cpf: "448.903.217-05", label: "Múltiplas pendências · misto",    hint: "CCIR + sobreposição APP" },
 ];
+
+// ── Processo de resolução ─────────────────────────────────────────────────────
+
+type ProcessoInfo = {
+  label: string;
+  modulo: string;
+  desc: string;
+  icon: string;
+  color: string;
+};
+
+function getProcessoInfoList(data: DiagnosticoResult): ProcessoInfo[] {
+  const status = data.sicar?.status;
+  const pendencias: string[] = data.sicar?.pendencias ?? [];
+  const result: ProcessoInfo[] = [];
+
+  if (status === "sobreposicao") {
+    result.push({
+      label: "Análise técnica presencial",
+      modulo: "EMATER (Empresa de Assistência Técnica e Extensão Rural) / Órgão ambiental",
+      desc: "Sobreposição com APP (Área de Preservação Permanente) ou RL (Reserva Legal) exige laudo de engenheiro florestal e aprovação do órgão ambiental estadual. Não resolve digitalmente.",
+      icon: "fa-user-tie",
+      color: "#b71c1c",
+    });
+  }
+
+  if (status === "cancelado") {
+    result.push({
+      label: "Reativação junto ao órgão estadual",
+      modulo: "Central do SICAR (Sistema de Cadastro Ambiental Rural)",
+      desc: "CAR (Cadastro Ambiental Rural) cancelado por inconsistência. É preciso solicitar reativação com documentação de domínio atualizada junto ao órgão ambiental estadual.",
+      icon: "fa-redo",
+      color: "#616161",
+    });
+  }
+
+  if (status === "pendente" || status === "sobreposicao") {
+    const temDoc = pendencias.some(
+      (p) =>
+        p.toLowerCase().includes("ccir") ||
+        p.toLowerCase().includes("domínio") ||
+        p.toLowerCase().includes("documento") ||
+        p.toLowerCase().includes("comprovante")
+    );
+    if (temDoc) {
+      result.push({
+        label: "Etapa 1 — Documentação (resolve digitalmente)",
+        modulo: "Módulo de Cadastro (SICAR — Sistema de Cadastro Ambiental Rural — offline)",
+        desc: "O produtor atualiza os dados de domínio (tipo, número, cartório) pelo celular em até 5 minutos. O upload da cópia é sempre opcional — CAR é declaratório.",
+        icon: "fa-file-alt",
+        color: "#e65100",
+      });
+    }
+
+    const temGeo = pendencias.some(
+      (p) =>
+        p.toLowerCase().includes("área") ||
+        p.toLowerCase().includes("módulo") ||
+        p.toLowerCase().includes("polígono") ||
+        p.toLowerCase().includes("diverge")
+    );
+    if (temGeo) {
+      result.push({
+        label: "Etapa — Retificação Geo (resolve digitalmente)",
+        modulo: "Módulo de Cadastro (SICAR — Sistema de Cadastro Ambiental Rural — offline)",
+        desc: "Divergência de área ou polígono. O produtor corrige os dados georreferenciados no Módulo de Cadastro e reenvia o arquivo .CAR.",
+        icon: "fa-map-marked-alt",
+        color: "#1565c0",
+      });
+    }
+
+    const temApp = pendencias.some(
+      (p) =>
+        p.toLowerCase().includes("app") ||
+        p.toLowerCase().includes("preservação") ||
+        p.toLowerCase().includes("sobreposição") ||
+        p.toLowerCase().includes("reserva legal")
+    );
+    if (temApp) {
+      result.push({
+        label: "Etapa — Análise técnica presencial (requer EMATER)",
+        modulo: "EMATER (Empresa de Assistência Técnica e Extensão Rural) / Órgão ambiental",
+        desc: "Sobreposição com APP (Área de Preservação Permanente) ou RL (Reserva Legal) requer laudo técnico. Um técnico da EMATER recebe o diagnóstico já preparado.",
+        icon: "fa-user-tie",
+        color: "#b71c1c",
+      });
+    }
+
+    if (!temDoc && !temGeo && !temApp) {
+      result.push({
+        label: "Retificação no Módulo de Cadastro",
+        modulo: "Módulo de Cadastro (SICAR — Sistema de Cadastro Ambiental Rural — offline)",
+        desc: "O produtor corrige os dados declarados e reenvia o arquivo .CAR. Somente os campos com asterisco são exigidos.",
+        icon: "fa-edit",
+        color: "#e65100",
+      });
+    }
+  }
+
+  return result;
+}
 
 // ── Root ──────────────────────────────────────────────────────────────────────
 
-type AppStep = "solicitacao" | "pendente" | "login" | "portal";
+type AppStep = "govbr" | "login" | "portal";
+
+const SESSION_KEY = "carproativo_session";
 
 function ParceirPage() {
-  const [step, setStep] = useState<AppStep>("solicitacao");
-  const [institution, setInstitution] = useState<Institution | null>(null);
-  const [solicitante, setSolicitante] = useState<{ nome: string; instituicao: string } | null>(null);
+  const [step, setStep] = useState<AppStep>(() => {
+    try { return (sessionStorage.getItem(SESSION_KEY + "_step") as AppStep) || "govbr"; } catch { return "govbr"; }
+  });
+  const [institution, setInstitution] = useState<Institution | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY + "_inst");
+      return raw ? (JSON.parse(raw) as Institution) : null;
+    } catch { return null; }
+  });
 
-  if (step === "solicitacao") {
-    return <SolicitacaoScreen onSubmit={(data) => { setSolicitante(data); setStep("pendente"); }} />;
+  function persist(s: AppStep, inst: Institution | null) {
+    try {
+      sessionStorage.setItem(SESSION_KEY + "_step", s);
+      sessionStorage.setItem(SESSION_KEY + "_inst", inst ? JSON.stringify(inst) : "");
+    } catch {}
   }
 
-  if (step === "pendente") {
-    return <PendenteScreen solicitante={solicitante!} onEnterCode={() => setStep("login")} />;
-  }
+  function handleAuth() { persist("login", null); setStep("login"); }
+  function handleLogin(inst: Institution) { persist("portal", inst); setInstitution(inst); setStep("portal"); }
+  function handleLogout() { persist("govbr", null); setInstitution(null); setStep("govbr"); }
 
-  if (step === "login") {
-    return <LoginScreen onLogin={(inst) => { setInstitution(inst); setStep("portal"); }} />;
-  }
-
-  return <PortalScreen institution={institution!} onLogout={() => { setInstitution(null); setStep("solicitacao"); }} />;
-}
-
-// ── Solicitação ───────────────────────────────────────────────────────────────
-
-const INST_TYPES = [
-  { value: "banco",       label: "Banco / Financeira" },
-  { value: "cooperativa", label: "Cooperativa de Crédito" },
-  { value: "trading",     label: "Trading / Agroindústria" },
-  { value: "emater",      label: "EMATER / Órgão público" },
-  { value: "outro",       label: "Outro" },
-];
-
-function SolicitacaoScreen({ onSubmit }: { onSubmit: (d: { nome: string; instituicao: string }) => void }) {
-  const [nome, setNome] = useState("");
-  const [instituicao, setInstituicao] = useState("");
-  const [tipo, setTipo] = useState("cooperativa");
-  const [cnpj, setCnpj] = useState("");
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!nome || !instituicao || !email) return;
-    setSubmitted(true);
-    setTimeout(() => onSubmit({ nome, instituicao }), 900);
-  }
+  if (step === "govbr") return <GovBrScreen onAuth={handleAuth} />;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--color-secondary-01)", display: "flex", flexDirection: "column" }}>
-      <header className="br-header" style={{ background: "#fff", borderBottom: "1px solid var(--color-secondary-03)" }}>
-        <div className="container-lg">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 72 }}>
-            <Link to="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
-              <img src={govBrLogo} alt="Governo Federal" style={{ height: 32 }} />
-              <span style={{ margin: "0 12px", borderLeft: "1px solid var(--color-secondary-03)", height: 24 }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontWeight: "bold", color: "var(--color-secondary-09)", fontSize: "1.1rem" }}>CAR</span>
-                <span style={{ fontStyle: "italic", color: "var(--color-primary-default)", fontWeight: "bold", fontSize: "1.1rem" }}>Proativo</span>
-              </div>
-            </Link>
-            <Link to="/" className="br-button secondary small" style={{ borderRadius: 999 }}>
-              <i className="fas fa-arrow-left mr-2" aria-hidden="true" style={{ fontSize: 12 }} />
-              Apresentação
-            </Link>
-          </div>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <GovBrTopBar onLogout={handleLogout} />
+      {step === "login"
+        ? <LoginScreen onLogin={handleLogin} />
+        : <PortalScreen institution={institution!} onLogout={handleLogout} />
+      }
+    </div>
+  );
+}
+
+// ── Gov.br authenticated top bar ─────────────────────────────────────────────
+
+function GovBrTopBar({ onLogout }: { onLogout: () => void }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  return (
+    <div style={{
+      background: "#1351b4", color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 24px", height: 44, fontSize: 13, position: "sticky", top: 0, zIndex: 200,
+      fontFamily: "Rawline, sans-serif",
+    }}>
+      {/* Left: gov.br logo + nav links */}
+      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <img
+          src="https://sso.acesso.gov.br/assets/govbr/img/govbr-colorido-b.png"
+          alt="gov.br"
+          style={{ height: 20 }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+        <span style={{ color: "rgba(255,255,255,0.55)", margin: "0 4px" }}>|</span>
+        {["Institucional", "Acessibilidade", "Comunica BR", "Participe"].map((label) => (
+          <span key={label} style={{ color: "rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 12 }}>{label}</span>
+        ))}
+      </div>
+
+      {/* Right: atalhos + user */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 6,
+          border: "1px solid rgba(255,255,255,0.5)", borderRadius: 4,
+          padding: "3px 10px", cursor: "pointer", fontSize: 12,
+        }}>
+          <i className="fas fa-th" aria-hidden="true" style={{ fontSize: 11 }} />
+          Atalhos gov.br
         </div>
-      </header>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 16px" }}>
-        <div style={{ width: "100%", maxWidth: 520 }}>
-          {/* Progresso */}
-          <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32 }}>
-            {["Solicitação", "Aprovação", "Acesso"].map((label, i) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", flex: i < 2 ? 1 : 0 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: i === 0 ? "var(--color-primary-default)" : "var(--color-secondary-03)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.7rem", fontWeight: 800,
-                    color: i === 0 ? "#fff" : "var(--color-secondary-06)",
-                  }}>{i + 1}</div>
-                  <span style={{ fontSize: "0.65rem", color: i === 0 ? "var(--color-primary-default)" : "var(--color-secondary-05)", fontWeight: i === 0 ? 700 : 400, whiteSpace: "nowrap" }}>{label}</span>
-                </div>
-                {i < 2 && <div style={{ flex: 1, height: 2, background: "var(--color-secondary-03)", margin: "0 4px", marginBottom: 16 }} />}
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mb-5">
+        {/* User pill */}
+        <div style={{ position: "relative" }}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "none", border: "none", color: "#fff",
+              cursor: "pointer", fontSize: 13, fontFamily: "inherit",
+            }}
+          >
             <div style={{
-              width: 64, height: 64, borderRadius: "50%",
-              background: "var(--color-primary-pastel-01)",
+              width: 28, height: 28, borderRadius: "50%", background: "#3a3a3a",
               display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 20px",
+              overflow: "hidden",
             }}>
-              <i className="fas fa-file-signature" style={{ color: "var(--color-primary-default)", fontSize: 26 }} aria-hidden="true" />
+              <i className="fas fa-user" style={{ fontSize: 14, color: "#fff" }} aria-hidden="true" />
             </div>
-            <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--color-secondary-09)", margin: "0 0 8px" }}>
-              Solicitar acesso ao portal
-            </h1>
-            <p style={{ color: "var(--color-secondary-07)", margin: 0, fontSize: "0.9rem", lineHeight: 1.6 }}>
-              O portal do parceiro é exclusivo para instituições credenciadas.<br />
-              Preencha os dados abaixo para solicitar acesso.
-            </p>
-          </div>
+            <span>Olá, <strong>Elias</strong></span>
+            <i className="fas fa-chevron-down" style={{ fontSize: 10, opacity: 0.7 }} aria-hidden="true" />
+          </button>
 
-          <div className="br-card">
-            <div className="card-content">
-              <form onSubmit={handleSubmit}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                  <div>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
-                      Nome completo *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Maria Silva"
-                      value={nome}
-                      onChange={(e) => setNome(e.target.value)}
-                      required
-                      style={{ width: "100%", padding: "10px 12px", boxSizing: "border-box", border: "1px solid var(--color-secondary-04)", borderRadius: 6, fontSize: "0.9rem" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
-                      Instituição *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Sicredi Alto Jacuí"
-                      value={instituicao}
-                      onChange={(e) => setInstituicao(e.target.value)}
-                      required
-                      style={{ width: "100%", padding: "10px 12px", boxSizing: "border-box", border: "1px solid var(--color-secondary-04)", borderRadius: 6, fontSize: "0.9rem" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
-                      Tipo de instituição
-                    </label>
-                    <select
-                      value={tipo}
-                      onChange={(e) => setTipo(e.target.value)}
-                      style={{ width: "100%", padding: "10px 12px", border: "1px solid var(--color-secondary-04)", borderRadius: 6, fontSize: "0.9rem", background: "var(--pure-0)", color: "var(--color-secondary-08)" }}
-                    >
-                      {INST_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
-                      CNPJ <span style={{ fontWeight: 400, color: "var(--color-secondary-06)" }}>(opcional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="00.000.000/0001-00"
-                      value={cnpj}
-                      onChange={(e) => setCnpj(e.target.value)}
-                      style={{ width: "100%", padding: "10px 12px", boxSizing: "border-box", border: "1px solid var(--color-secondary-04)", borderRadius: 6, fontSize: "0.9rem" }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
-                      E-mail de contato *
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="seu@instituicao.com.br"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      style={{ width: "100%", padding: "10px 12px", boxSizing: "border-box", border: "1px solid var(--color-secondary-04)", borderRadius: 6, fontSize: "0.9rem" }}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="br-button primary large"
-                    style={{ borderRadius: 6, width: "100%", justifyContent: "center" }}
-                    disabled={submitted}
-                  >
-                    {submitted ? (
-                      <><i className="fas fa-spinner fa-spin mr-2" aria-hidden="true" />Enviando…</>
-                    ) : (
-                      <><i className="fas fa-paper-plane mr-2" aria-hidden="true" />Solicitar credenciamento</>
-                    )}
-                  </button>
-                </div>
-              </form>
+          {menuOpen && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 8px)",
+              background: "#fff", color: "#333", borderRadius: 6,
+              boxShadow: "0 4px 16px rgba(0,0,0,0.15)", minWidth: 180, zIndex: 300,
+              overflow: "hidden",
+            }}>
+              <div style={{ padding: "10px 16px", borderBottom: "1px solid #eee", fontSize: 12, color: "#555" }}>
+                <div style={{ fontWeight: 700, color: "#222" }}>Elias Ricardo</div>
+                <div>CPF: ***.***.***/00</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setMenuOpen(false); onLogout(); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  width: "100%", padding: "10px 16px", background: "none",
+                  border: "none", cursor: "pointer", fontSize: 13, color: "#c00",
+                }}
+              >
+                <i className="fas fa-sign-out-alt" aria-hidden="true" />
+                Sair do gov.br
+              </button>
             </div>
-          </div>
-
-          <p style={{ textAlign: "center", marginTop: 20, fontSize: "0.75rem", color: "var(--color-secondary-06)" }}>
-            Solicitações são analisadas em até 2 dias úteis. Você receberá o código de acesso por e-mail.
-          </p>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ── Aprovação pendente ────────────────────────────────────────────────────────
+// ── Gov.br ────────────────────────────────────────────────────────────────────
 
-function PendenteScreen({ solicitante, onEnterCode }: { solicitante: { nome: string; instituicao: string }; onEnterCode: () => void }) {
+function GovBrScreen({ onAuth }: { onAuth: () => void }) {
+  const [cpf, setCpf] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [cpfOpen, setCpfOpen] = useState(true);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => { setLoading(false); onAuth(); }, 1600);
+  }
+
+  const itemStyle: React.CSSProperties = {
+    display: "flex", alignItems: "center", padding: "12px 16px",
+    borderTop: "1px solid #e0e0e0", cursor: "pointer", background: "none",
+    border: "none", width: "100%", textAlign: "left", gap: 12,
+  };
+  const itemImgStyle: React.CSSProperties = { width: 24, height: 24, objectFit: "contain", flexShrink: 0 };
+
   return (
-    <div style={{ minHeight: "100vh", background: "var(--color-secondary-01)", display: "flex", flexDirection: "column" }}>
-      <header className="br-header" style={{ background: "#fff", borderBottom: "1px solid var(--color-secondary-03)" }}>
-        <div className="container-lg">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 72 }}>
-            <Link to="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
-              <img src={govBrLogo} alt="Governo Federal" style={{ height: 32 }} />
-              <span style={{ margin: "0 12px", borderLeft: "1px solid var(--color-secondary-03)", height: 24 }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontWeight: "bold", color: "var(--color-secondary-09)", fontSize: "1.1rem" }}>CAR</span>
-                <span style={{ fontStyle: "italic", color: "var(--color-primary-default)", fontWeight: "bold", fontSize: "1.1rem" }}>Proativo</span>
-              </div>
-            </Link>
-            <Link to="/" className="br-button secondary small" style={{ borderRadius: 999 }}>
-              <i className="fas fa-arrow-left mr-2" aria-hidden="true" style={{ fontSize: 12 }} />
-              Apresentação
-            </Link>
-          </div>
+    <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", fontFamily: "Rawline, sans-serif" }}>
+      {/* Header */}
+      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderBottom: "1px solid #e0e0e0", height: 48 }}>
+        <img
+          src="https://sso.acesso.gov.br/assets/govbr/img/govbr.png"
+          alt="Logomarca GovBR"
+          style={{ height: 32 }}
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+            (e.target as HTMLImageElement).insertAdjacentHTML("afterend", '<span style="font-weight:800;font-size:1.3rem"><span style="color:#1351B4">g</span><span style="color:#168821">o</span><span style="color:#1351B4">v</span><span style="color:#FFCD07">.</span><span style="color:#1351B4">b</span><span style="color:#168821">r</span></span>');
+          }}
+        />
+        <div style={{ display: "flex", gap: 20 }}>
+          <a href="#" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "#333", textDecoration: "none" }}>
+            <i className="fas fa-adjust" aria-hidden="true" /> Alto Contraste
+          </a>
+          <a href="//www.vlibras.gov.br" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "#333", textDecoration: "none" }}>
+            <i className="fas fa-deaf" aria-hidden="true" /> VLibras
+          </a>
         </div>
       </header>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 16px" }}>
-        <div style={{ width: "100%", maxWidth: 480 }}>
-          {/* Progresso */}
-          <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32 }}>
-            {["Solicitação", "Aprovação", "Acesso"].map((label, i) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", flex: i < 2 ? 1 : 0 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: i === 0 ? "var(--color-success-default, #168821)" : i === 1 ? "var(--color-primary-default)" : "var(--color-secondary-03)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.7rem", fontWeight: 800,
-                    color: i < 2 ? "#fff" : "var(--color-secondary-06)",
-                  }}>
-                    {i === 0 ? <i className="fas fa-check" style={{ fontSize: 10 }} /> : i + 1}
+      {/* Body */}
+      <div style={{ flex: 1, display: "flex" }}>
+        {/* Aside — imagem */}
+        <aside style={{ flex: "0 0 57%", overflow: "hidden", display: "flex" }}>
+          <img
+            src="https://sso.acesso.gov.br/assets/govbr/img/conta_govbr_v2_defeso-eleitoral.jpg"
+            alt="Uma conta gov.br garante a identificação de cada cidadão que acessa os serviços digitais públicos."
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
+          />
+        </aside>
+
+        {/* Main — form */}
+        <main style={{ flex: "0 0 43%", display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 40px 32px 32px" }}>
+          <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 380 }}>
+            <div style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 4, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
+              <h3 style={{ margin: 0, padding: "20px 20px 12px", fontSize: "0.95rem", fontWeight: 700, color: "#1a1a1a" }}>
+                Identifique-se no gov.br com:
+              </h3>
+
+              {/* CPF accordion header */}
+              <div
+                style={{ ...itemStyle, borderTop: "1px solid #e0e0e0" }}
+                onClick={() => setCpfOpen(o => !o)}
+              >
+                <img
+                  src="https://sso.acesso.gov.br/assets/govbr/img/icons/id-card-solid.png"
+                  alt=""
+                  style={itemImgStyle}
+                  onError={(e) => { (e.target as HTMLImageElement).replaceWith(Object.assign(document.createElement("i"), { className: "fas fa-id-card", style: "color:#1351B4;font-size:18px" })); }}
+                />
+                <a style={{ color: "#1351B4", fontSize: "0.88rem", fontWeight: 600, textDecoration: "none" }}>
+                  Número do CPF
+                </a>
+              </div>
+
+              {/* CPF accordion panel */}
+              {cpfOpen && (
+                <div style={{ padding: "12px 20px 16px", borderTop: "1px solid #eee", background: "#fafafa" }}>
+                  <p style={{ margin: "0 0 12px", fontSize: "0.8rem", color: "#555", lineHeight: 1.55 }}>
+                    Digite seu CPF para <strong>criar</strong> ou <strong>acessar</strong> sua conta gov.br
+                  </p>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#333", marginBottom: 6 }}>CPF</label>
+                  <input
+                    id="accountId"
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="Digite seu CPF"
+                    value={cpf}
+                    onChange={(e) => setCpf(e.target.value)}
+                    autoComplete="off"
+                    style={{
+                      width: "100%", padding: "10px 12px", boxSizing: "border-box",
+                      border: "1px solid #bdbdbd", borderRadius: 4,
+                      fontSize: "0.9rem", color: "#1a1a1a", marginBottom: 14, outline: "none",
+                      background: "#fff",
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = "#1351B4"; e.target.style.boxShadow = "0 0 0 2px rgba(19,81,180,0.15)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "#bdbdbd"; e.target.style.boxShadow = "none"; }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      style={{
+                        padding: "10px 32px", borderRadius: 999, border: "none",
+                        background: "#1351B4", color: "#fff", fontWeight: 700,
+                        fontSize: "0.88rem", cursor: loading ? "default" : "pointer",
+                        opacity: loading ? 0.6 : 1,
+                      }}
+                    >
+                      {loading ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: 6 }} aria-hidden="true" />Aguarde…</> : "Continuar"}
+                    </button>
                   </div>
-                  <span style={{ fontSize: "0.65rem", color: i === 1 ? "var(--color-primary-default)" : i === 0 ? "var(--color-success-default, #168821)" : "var(--color-secondary-05)", fontWeight: i <= 1 ? 700 : 400, whiteSpace: "nowrap" }}>{label}</span>
                 </div>
-                {i < 2 && <div style={{ flex: 1, height: 2, background: i === 0 ? "var(--color-success-default, #168821)" : "var(--color-secondary-03)", margin: "0 4px", marginBottom: 16 }} />}
-              </div>
-            ))}
-          </div>
+              )}
 
-          <div className="br-card">
-            <div className="card-content" style={{ textAlign: "center", padding: "36px 24px" }}>
-              <div style={{
-                width: 72, height: 72, borderRadius: "50%",
-                background: "#fff8e1",
-                border: "3px solid #ffcc80",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 24px",
-              }}>
-                <i className="fas fa-clock" style={{ color: "#e65100", fontSize: 30 }} aria-hidden="true" />
-              </div>
+              {/* Outras opções */}
+              <label style={{ display: "block", padding: "12px 20px 4px", fontSize: "0.78rem", fontWeight: 600, color: "#555" }}>
+                Outras opções de identificação:
+              </label>
+              <hr style={{ margin: "0 0 0", border: "none", borderTop: "1px solid #e0e0e0" }} />
 
-              <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--color-secondary-09)", margin: "0 0 12px" }}>
-                Solicitação enviada!
-              </h2>
-              <p style={{ color: "var(--color-secondary-07)", fontSize: "0.9rem", lineHeight: 1.7, margin: "0 0 8px" }}>
-                Recebemos o pedido de credenciamento de <strong>{solicitante.nome}</strong> ({solicitante.instituicao}).
-              </p>
-              <p style={{ color: "var(--color-secondary-07)", fontSize: "0.875rem", lineHeight: 1.7, margin: "0 0 28px" }}>
-                Nossa equipe analisará os dados e enviará o <strong>código de acesso por e-mail em até 2 dias úteis</strong>.
-              </p>
+              {/* Login com banco */}
+              <button type="button" style={{ ...itemStyle, color: "#008C32", borderTop: "none", paddingLeft: 20 }}>
+                <img src="https://sso.acesso.gov.br/assets/govbr/img/icons/InternetBanking-green.png" alt="" style={itemImgStyle}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <span style={{ color: "#008C32", fontSize: "0.85rem", fontWeight: 600 }}>Login com seu banco</span>
+                <span style={{ fontSize: "0.55rem", background: "#008C32", color: "#fff", padding: "2px 5px", position: "relative", top: -3, marginLeft: 4, fontWeight: 700, letterSpacing: "0.04em" }}>
+                  SUA CONTA SERÁ PRATA
+                </span>
+              </button>
 
-              <div style={{ background: "var(--color-secondary-01)", border: "1px solid var(--color-secondary-03)", borderRadius: 8, padding: "14px 18px", marginBottom: 28, textAlign: "left" }}>
-                <p style={{ margin: "0 0 10px", fontSize: "0.8rem", fontWeight: 700, color: "var(--color-secondary-08)", display: "flex", alignItems: "center", gap: 6 }}>
-                  <i className="fas fa-list-check" style={{ color: "var(--color-primary-default)" }} aria-hidden="true" />
-                  O que acontece depois da aprovação
+              {/* QR code */}
+              <button type="button" style={{ ...itemStyle, paddingLeft: 20 }}>
+                <img src="https://sso.acesso.gov.br/assets/govbr/img/icons/qrcode.png" alt="" style={itemImgStyle}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <span style={{ color: "#1351B4", fontSize: "0.85rem" }}>Login com QR code</span>
+              </button>
+
+              {/* Certificado digital */}
+              <button type="button" style={{ ...itemStyle, paddingLeft: 20 }}>
+                <img src="https://sso.acesso.gov.br/assets/govbr/img/icons/CD.png" alt="" style={itemImgStyle}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <span style={{ color: "#1351B4", fontSize: "0.85rem" }}>Seu certificado digital</span>
+              </button>
+
+              {/* Certificado digital em nuvem */}
+              <button type="button" style={{ ...itemStyle, paddingLeft: 20 }}>
+                <img src="https://sso.acesso.gov.br/assets/govbr/img/icons/CD-Nuvem.png" alt="" style={itemImgStyle}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <span style={{ color: "#1351B4", fontSize: "0.85rem" }}>Seu certificado digital em nuvem</span>
+              </button>
+
+              {/* Footer links */}
+              <div style={{ padding: "16px 20px", borderTop: "1px solid #e0e0e0", display: "flex", flexDirection: "column", gap: 8 }}>
+                <a href="#" style={{ display: "flex", alignItems: "center", gap: 8, color: "#1351B4", fontSize: "0.8rem", textDecoration: "none" }}>
+                  <img src="https://sso.acesso.gov.br/assets/govbr/fontawesome/webfonts/circle-question-solid.svg" alt="" style={{ width: 14, height: 14 }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  Está com dúvidas e precisa de ajuda?
+                </a>
+                <a href="#" style={{ color: "#1351B4", fontSize: "0.8rem", textDecoration: "none" }}>
+                  Termo de Uso e Aviso de Privacidade
+                </a>
+                <p style={{ margin: "4px 0 0", fontSize: "0.65rem", color: "#aaa" }}>
+                  Simulação — qualquer CPF é aceito nesta demonstração
                 </p>
-                {[
-                  "Você recebe um código de acesso por e-mail",
-                  "Acessa o portal com a instituição e o código",
-                  "Consulta CPFs e notifica produtores com CAR pendente",
-                ].map((step, i) => (
-                  <div key={step} style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: i < 2 ? 8 : 0 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--color-primary-default)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
-                    <span style={{ fontSize: "0.8rem", color: "var(--color-secondary-07)", lineHeight: 1.5 }}>{step}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ borderTop: "1px solid var(--color-secondary-03)", paddingTop: 20 }}>
-                <p style={{ margin: "0 0 12px", fontSize: "0.8rem", color: "var(--color-secondary-06)" }}>
-                  Já tem um código de acesso?
-                </p>
-                <button
-                  type="button"
-                  className="br-button secondary"
-                  style={{ borderRadius: 6 }}
-                  onClick={onEnterCode}
-                >
-                  <i className="fas fa-key mr-2" aria-hidden="true" />
-                  Inserir código de acesso
-                </button>
               </div>
             </div>
-          </div>
-        </div>
+          </form>
+        </main>
       </div>
     </div>
   );
@@ -399,26 +496,6 @@ function LoginScreen({ onLogin }: { onLogin: (i: Institution) => void }) {
       {/* Login card */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 16px" }}>
         <div style={{ width: "100%", maxWidth: 440 }}>
-          {/* Progresso */}
-          <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32 }}>
-            {["Solicitação", "Aprovação", "Acesso"].map((label, i) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", flex: i < 2 ? 1 : 0 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    background: i < 2 ? "var(--color-success-default, #168821)" : "var(--color-primary-default)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.7rem", fontWeight: 800, color: "#fff",
-                  }}>
-                    {i < 2 ? <i className="fas fa-check" style={{ fontSize: 10 }} /> : i + 1}
-                  </div>
-                  <span style={{ fontSize: "0.65rem", color: i < 2 ? "var(--color-success-default, #168821)" : "var(--color-primary-default)", fontWeight: 700, whiteSpace: "nowrap" }}>{label}</span>
-                </div>
-                {i < 2 && <div style={{ flex: 1, height: 2, background: "var(--color-success-default, #168821)", margin: "0 4px", marginBottom: 16 }} />}
-              </div>
-            ))}
-          </div>
-
           <div className="text-center mb-5">
             <div style={{
               width: 64, height: 64, borderRadius: "50%",
@@ -432,7 +509,7 @@ function LoginScreen({ onLogin }: { onLogin: (i: Institution) => void }) {
               Portal do Parceiro
             </h1>
             <p style={{ color: "var(--color-secondary-07)", margin: 0, fontSize: "0.9rem" }}>
-              Insira o código recebido por e-mail para acessar
+              Insira o código recebido por e‑mail para acessar o Portal do Parceiro CAR (Cadastro Ambiental Rural)
             </p>
           </div>
 
@@ -507,12 +584,13 @@ function LoginScreen({ onLogin }: { onLogin: (i: Institution) => void }) {
 
 // ── Portal ─────────────────────────────────────────────────────────────────────
 
-type PortalTab = "consulta" | "midiakit" | "painel";
+type PortalTab = "consulta" | "assistente" | "piloto" | "painel";
 
 const PORTAL_TABS: { id: PortalTab; label: string; icon: string }[] = [
-  { id: "consulta",  label: "Consultar CPF",  icon: "fa-search" },
-  { id: "midiakit",  label: "Mídia Kit",       icon: "fa-chalkboard-teacher" },
-  { id: "painel",    label: "Painel",          icon: "fa-chart-bar" },
+  { id: "consulta",   label: "Consultar CPF", icon: "fa-search" },
+  { id: "assistente", label: "Assistente CAR", icon: "fa-robot" },
+  { id: "piloto",     label: "Fluxo do produtor", icon: "fa-mobile-alt" },
+  { id: "painel",     label: "Painel",         icon: "fa-chart-bar" },
 ];
 
 function PortalScreen({ institution, onLogout }: { institution: Institution; onLogout: () => void }) {
@@ -567,15 +645,10 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
                 <span style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--color-secondary-08)" }}>{institution.label}</span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onLogout}
-              className="br-button secondary small"
-              style={{ borderRadius: 999 }}
-            >
-              <i className="fas fa-sign-out-alt mr-2" aria-hidden="true" style={{ fontSize: 12 }} />
-              Sair
-            </button>
+            <span style={{ fontSize: "0.75rem", color: "var(--color-secondary-05)" }}>
+              <i className="fas fa-shield-alt mr-1" aria-hidden="true" />
+              Sessão gov.br ativa
+            </span>
           </div>
         </div>
       </header>
@@ -613,8 +686,9 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
       <div style={{ flex: 1 }}>
         <div className="container-lg" style={{ padding: "40px 16px" }}>
 
-          {tab === "midiakit" && <MidiaKit institution={institution} />}
-          {tab === "painel" && <MetricsSection institution={institution} />}
+{tab === "painel" && <MetricsSection institution={institution} />}
+          {tab === "assistente" && <DemoPage />}
+          {tab === "piloto" && <PilotoPage />}
           {tab === "consulta" && <>
           {/* Demo CPFs */}
           <div style={{
@@ -739,7 +813,7 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
               <Link to="/" className="br-button circle small inverted" aria-label="Apresentação">
                 <i className="fas fa-home" aria-hidden="true" />
               </Link>
-              <Link to="/piloto" className="br-button circle small inverted" aria-label="Demonstração">
+              <Link to="/demo" className="br-button circle small inverted" aria-label="Demonstração">
                 <i className="fas fa-flask" aria-hidden="true" />
               </Link>
             </div>
@@ -774,7 +848,7 @@ function DiagnosticoCard({
       <div className="br-card" style={{ marginBottom: 28 }}>
         <div className="card-content text-center" style={{ padding: "32px 0" }}>
           <i className="fas fa-search" style={{ fontSize: 36, color: "var(--color-secondary-04)", marginBottom: 12, display: "block" }} aria-hidden="true" />
-          <strong style={{ color: "var(--color-secondary-07)" }}>CPF não encontrado no SICAR</strong>
+          <strong style={{ color: "var(--color-secondary-07)" }}>CPF (Cadastro de Pessoas Físicas) não encontrado no SICAR (Sistema de Cadastro Ambiental Rural)</strong>
           <p style={{ color: "var(--color-secondary-06)", fontSize: "0.875rem", margin: "8px 0 0" }}>
             Verifique se o CPF está correto ou se o produtor possui imóvel cadastrado.
           </p>
@@ -855,6 +929,60 @@ function DiagnosticoCard({
                 </ul>
               </div>
             )}
+
+            {(() => {
+              const procs = getProcessoInfoList(data);
+              if (procs.length === 0) return null;
+              const digital = procs.filter(p => p.icon !== "fa-user-tie" && p.icon !== "fa-redo").length;
+              const presencial = procs.filter(p => p.icon === "fa-user-tie").length;
+              return (
+                <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {procs.length > 1 && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+                      <span style={{ fontSize: "0.7rem", fontWeight: 700, background: "#e65100", color: "#fff", borderRadius: 4, padding: "2px 8px" }}>
+                        {procs.length} caminhos de resolução
+                      </span>
+                      {digital > 0 && (
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700, background: "#168821", color: "#fff", borderRadius: 4, padding: "2px 8px" }}>
+                          {digital} resolve{digital === 1 ? "" : "m"} pelo celular
+                        </span>
+                      )}
+                      {presencial > 0 && (
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700, background: "#b71c1c", color: "#fff", borderRadius: 4, padding: "2px 8px" }}>
+                          {presencial} requer{presencial === 1 ? "" : "em"} visita técnica
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {procs.map((proc, i) => (
+                    <div key={i} style={{
+                      background: `${proc.color}09`,
+                      border: `1px solid ${proc.color}30`,
+                      borderRadius: 8,
+                      padding: "10px 14px",
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "flex-start",
+                    }}>
+                      <i className={`fas ${proc.icon}`} style={{ color: proc.color, fontSize: 13, flexShrink: 0, marginTop: 3 }} aria-hidden="true" />
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <strong style={{ fontSize: "0.72rem", color: proc.color, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                            {proc.label}
+                          </strong>
+                          <span style={{ fontSize: "0.68rem", color: "var(--color-secondary-06)", fontStyle: "italic" }}>
+                            {proc.modulo}
+                          </span>
+                        </div>
+                        <p style={{ margin: "3px 0 0", fontSize: "0.77rem", color: "var(--color-secondary-07)", lineHeight: 1.55 }}>
+                          {proc.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Fontes */}
@@ -926,215 +1054,6 @@ function DiagnosticoCard({
   );
 }
 
-// ── Mídia Kit ─────────────────────────────────────────────────────────────────
-
-type KitChannel = "whatsapp" | "sms" | "email" | "grupo";
-type KitMoment = "educacao" | "pendencia" | "lembrete";
-
-const KIT_CHANNELS: { id: KitChannel; icon: string; label: string; color: string }[] = [
-  { id: "whatsapp", icon: "fab fa-whatsapp", label: "WhatsApp", color: "#25D366" },
-  { id: "sms",      icon: "fas fa-comment-dots", label: "SMS", color: "var(--color-primary-default)" },
-  { id: "email",    icon: "fas fa-envelope", label: "E-mail", color: "#e65100" },
-  { id: "grupo",    icon: "fas fa-users", label: "Grupo / Circular", color: "#7b1fa2" },
-];
-
-const KIT_MOMENTS: { id: KitMoment; label: string; desc: string }[] = [
-  { id: "educacao",  label: "1ª mensagem — educação", desc: "Produtor não sabe o que é CAR" },
-  { id: "pendencia", label: "2ª mensagem — pendência", desc: "Produtor tem pendência identificada" },
-  { id: "lembrete",  label: "3ª mensagem — lembrete", desc: "Produtor não agiu após 7 dias" },
-];
-
-function buildKitMessage(channel: KitChannel, moment: KitMoment, inst: Institution): string {
-  const instName = inst.label;
-
-  if (moment === "educacao") {
-    if (channel === "whatsapp") return `Olá, Sr. José! Aqui é da ${instName} 👋\n\nVocê sabia que seu registro de terra no governo precisa ser atualizado de tempos em tempos?\n\nEsse cadastro — chamado de CAR — é o que garante que você pode acessar o crédito rural do próximo plantio.\n\nQuer saber se o seu está em dia? É gratuito e leva menos de 1 minuto:\n👉 carproativo.gov.br/verificar\n\nQualquer dúvida, fala com a gente!`;
-    if (channel === "sms") return `${instName}: Seu registro de terra (CAR) precisa estar em dia para acessar credito rural. Verifique gratis: carproativo.gov.br/verificar`;
-    if (channel === "email") return `Assunto: Seu registro de terra está em dia?\n\nSr. José,\n\nO Cadastro Ambiental Rural (CAR) é o documento que registra sua propriedade junto ao governo federal. Ele é obrigatório e necessário para acessar crédito rural, Pronaf e outros benefícios.\n\nMuitos produtores não sabem que o cadastro pode ficar desatualizado com o tempo — e isso pode bloquear o acesso ao crédito sem aviso prévio.\n\nVerifique agora se o seu está regular:\n👉 carproativo.gov.br/verificar\n\nO processo é gratuito e leva menos de 1 minuto.\n\nAtenciosamente,\n${instName}`;
-    return `Prezado associado,\n\nLembramos que o Cadastro Ambiental Rural (CAR) é obrigatório para produtores rurais e necessário para acesso ao crédito rural.\n\nRecomendamos que todos verifiquem a situação do seu cadastro gratuitamente em:\ncarproativo.gov.br/verificar\n\n${instName}`;
-  }
-
-  if (moment === "pendencia") {
-    if (channel === "whatsapp") return `Sr. José, verificamos aqui na ${instName} e o seu registro de terra (CAR do *Sítio Boa Esperança*) está com uma pendência.\n\nIsso pode travar a liberação do seu crédito rural no próximo plantio.\n\nA boa notícia: dá pra resolver pelo celular, em menos de 5 minutos, sem sair de casa:\n👉 carproativo.gov.br/resolver?car=MT-5102504\n\nQualquer dúvida, liga pra gente! 📞`;
-    if (channel === "sms") return `${instName}: Seu CAR (Sitio Boa Esperanca) tem pendencia que pode bloquear seu credito rural. Resolva em 5min: carproativo.gov.br/resolver?car=MT-5102504`;
-    if (channel === "email") return `Assunto: Pendência no seu registro de terra — ação necessária\n\nSr. José,\n\nIdentificamos uma pendência no Cadastro Ambiental Rural (CAR) do Sítio Boa Esperança que pode impedir a liberação do seu crédito rural.\n\nO que está pendente: documento de posse desatualizado.\n\nComo resolver: acesse o link abaixo e siga as instruções. O processo é simples, gratuito e pode ser feito pelo celular em menos de 5 minutos.\n\n👉 carproativo.gov.br/resolver?car=MT-5102504\n\nSe precisar de ajuda, entre em contato com sua agência.\n\nAtenciosamente,\n${instName}`;
-    return `Comunicado interno — ${instName}\n\nIdentificamos associados com pendências no CAR que podem impactar o acesso ao crédito rural.\n\nOrientamos os associados afetados a acessar o link de regularização enviado individualmente.\n\nDúvidas: contate o departamento de crédito rural.`;
-  }
-
-  // lembrete
-  if (channel === "whatsapp") return `Sr. José, tudo bem? 👋\n\nHá uma semana enviamos um aviso sobre a pendência no seu registro de terra (CAR).\n\nA pendência ainda está aberta e pode travar seu crédito rural. Leva só 5 minutos para resolver:\n👉 carproativo.gov.br/resolver?car=MT-5102504\n\nPrecisando de ajuda, é só chamar!`;
-  if (channel === "sms") return `${instName}: Lembrete — pendencia no seu CAR ainda esta aberta. Resolva antes do vencimento: carproativo.gov.br/resolver?car=MT-5102504`;
-  if (channel === "email") return `Assunto: Lembrete — pendência no CAR ainda em aberto\n\nSr. José,\n\nEnviamos um aviso há 7 dias sobre a pendência no CAR do Sítio Boa Esperança. A pendência ainda não foi resolvida.\n\nLembramos que essa pendência pode bloquear a liberação de crédito rural. Por favor, acesse o link abaixo o quanto antes:\n\n👉 carproativo.gov.br/resolver?car=MT-5102504\n\nSe precisar de auxílio, nossa equipe está disponível.\n\nAtenciosamente,\n${instName}`;
-  return `Lembrete — ${instName}\n\nAssociados que receberam aviso de pendência no CAR e ainda não regularizaram: o prazo para manter o acesso ao crédito rural está se aproximando.\n\nOrientamos a acessar o link de regularização o quanto antes.`;
-}
-
-function MidiaKit({ institution }: { institution: Institution }) {
-  const [channel, setChannel] = useState<KitChannel>("whatsapp");
-  const [moment, setMoment] = useState<KitMoment>("educacao");
-  const [copied, setCopied] = useState(false);
-
-  const message = buildKitMessage(channel, moment, institution);
-
-  function handleCopy() {
-    navigator.clipboard.writeText(message).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <div>
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ margin: "0 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "var(--color-secondary-09)" }}>
-          Mídia Kit — Educação e notificação
-        </h2>
-        <p style={{ margin: 0, color: "var(--color-secondary-07)", fontSize: "0.875rem", lineHeight: 1.65 }}>
-          Templates prontos em linguagem simples para comunicar com produtores rurais. Adapte com o nome do produtor e envie pelo canal que já usa.
-        </p>
-      </div>
-
-      <div className="row">
-        <div className="col-md-4 mb-4 mb-md-0">
-          {/* Moment selector */}
-          <div className="br-card" style={{ marginBottom: 16 }}>
-            <div className="card-header">
-              <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>Momento da comunicação</h3>
-            </div>
-            <div className="card-content" style={{ padding: 0 }}>
-              {KIT_MOMENTS.map((m) => {
-                const active = moment === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMoment(m.id)}
-                    style={{
-                      width: "100%", padding: "12px 16px", background: active ? "var(--color-primary-pastel-01)" : "#fff",
-                      border: "none", borderBottom: "1px solid var(--color-secondary-03)",
-                      borderLeft: active ? "3px solid var(--color-primary-default)" : "3px solid transparent",
-                      cursor: "pointer", textAlign: "left", transition: "all 0.15s",
-                    }}
-                  >
-                    <div style={{ fontWeight: active ? 700 : 500, color: active ? "var(--color-primary-default)" : "var(--color-secondary-08)", fontSize: "0.875rem" }}>{m.label}</div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--color-secondary-06)", marginTop: 2 }}>{m.desc}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Channel selector */}
-          <div className="br-card">
-            <div className="card-header">
-              <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>Canal</h3>
-            </div>
-            <div className="card-content">
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {KIT_CHANNELS.map((ch) => {
-                  const active = channel === ch.id;
-                  return (
-                    <button
-                      key={ch.id}
-                      type="button"
-                      onClick={() => setChannel(ch.id)}
-                      style={{
-                        padding: "10px 14px", borderRadius: 8, cursor: "pointer",
-                        border: active ? `2px solid ${ch.color}` : "2px solid var(--color-secondary-03)",
-                        background: active ? `${ch.color}12` : "#fff",
-                        display: "flex", alignItems: "center", gap: 10,
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      <i className={ch.icon} style={{ color: ch.color, fontSize: 18, width: 20, textAlign: "center" }} aria-hidden="true" />
-                      <span style={{ fontWeight: active ? 700 : 500, color: active ? ch.color : "var(--color-secondary-08)", fontSize: "0.875rem" }}>{ch.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-8">
-          <div className="br-card" style={{ height: "100%" }}>
-            <div className="card-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <i className={KIT_CHANNELS.find(c => c.id === channel)!.icon} style={{ color: KIT_CHANNELS.find(c => c.id === channel)!.color, fontSize: 18 }} aria-hidden="true" />
-                <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700 }}>
-                  {KIT_MOMENTS.find(m => m.id === moment)!.label} · {KIT_CHANNELS.find(c => c.id === channel)!.label}
-                </h3>
-              </div>
-              <button
-                type="button"
-                className="br-button secondary small"
-                style={{ borderRadius: 6 }}
-                onClick={handleCopy}
-              >
-                <i className={`fas ${copied ? "fa-check" : "fa-copy"} mr-2`} aria-hidden="true" />
-                {copied ? "Copiado!" : "Copiar"}
-              </button>
-            </div>
-            <div className="card-content">
-              <div style={{
-                background: "var(--color-secondary-01)",
-                border: "1px solid var(--color-secondary-03)",
-                borderRadius: 8, padding: "16px 18px",
-                minHeight: 260,
-              }}>
-                <pre style={{
-                  margin: 0, fontFamily: "inherit", fontSize: "0.875rem",
-                  color: "var(--color-secondary-08)", whiteSpace: "pre-wrap", lineHeight: 1.75,
-                }}>
-                  {message}
-                </pre>
-              </div>
-
-              <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <div style={{ background: "var(--color-primary-pastel-01)", borderRadius: 6, padding: "6px 12px", fontSize: "0.75rem", color: "var(--color-primary-darken-02)", fontWeight: 600 }}>
-                  <i className="fas fa-info-circle mr-1" aria-hidden="true" />
-                  Substitua "Sr. José" pelo nome do cliente
-                </div>
-                <div style={{ background: "var(--color-secondary-01)", borderRadius: 6, padding: "6px 12px", fontSize: "0.75rem", color: "var(--color-secondary-07)", border: "1px solid var(--color-secondary-03)" }}>
-                  <i className="fas fa-link mr-1" aria-hidden="true" />
-                  O link de resolução é gerado automaticamente por CPF
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tips */}
-      <div className="br-card mt-4">
-        <div className="card-header">
-          <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>
-            <i className="fas fa-lightbulb mr-2" style={{ color: "var(--color-primary-default)" }} aria-hidden="true" />
-            Como usar o mídia kit
-          </h3>
-        </div>
-        <div className="card-content">
-          <div className="row">
-            {[
-              { n: "1", t: "Comece pela educação", d: "Mande a 1ª mensagem para todos os clientes rurais — não só os com pendência. Muitos não sabem o que é CAR." },
-              { n: "2", t: "Personalize com o nome", d: "\"Sr. José\" converte muito mais que \"Prezado cliente\". Use o nome do produtor sempre que possível." },
-              { n: "3", t: "WhatsApp primeiro", d: "Taxa de abertura do WhatsApp chega a 98%. E-mail e SMS para quem não responde em 3 dias." },
-              { n: "4", t: "Nunca mencione 'autuação'", d: "Foque no benefício — liberar crédito, garantir o plantio. Não no risco de punição. O medo paralisa." },
-            ].map((tip) => (
-              <div key={tip.n} className="col-md-6 mb-3">
-                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--color-primary-default)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800, flexShrink: 0 }}>{tip.n}</div>
-                  <div>
-                    <strong style={{ display: "block", fontSize: "0.875rem", color: "var(--color-secondary-09)", marginBottom: 2 }}>{tip.t}</strong>
-                    <span style={{ fontSize: "0.8rem", color: "var(--color-secondary-07)", lineHeight: 1.55 }}>{tip.d}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Notify Modal ──────────────────────────────────────────────────────────────
 
@@ -1169,9 +1088,14 @@ function NotifyModal({
   onClose: () => void;
 }) {
   const [channel, setChannel] = useState<NotifyChannel>("whatsapp");
+  const [recipient, setRecipient] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const message = buildMessage(channel, data, institution);
+
+  const recipientLabel = channel === "email" ? "E-mail do produtor" : "WhatsApp / celular do produtor";
+  const recipientPlaceholder = channel === "email" ? "exemplo@email.com" : "(99) 99999-9999";
+  const recipientType = channel === "email" ? "email" : "tel";
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -1260,7 +1184,7 @@ function NotifyModal({
                       <button
                         key={key}
                         type="button"
-                        onClick={() => setChannel(key)}
+                        onClick={() => { setChannel(key); setRecipient(""); }}
                         style={{
                           flex: 1, padding: "10px 8px", borderRadius: 8, cursor: "pointer",
                           border: active ? `2px solid ${cfg.color}` : "2px solid var(--color-secondary-03)",
@@ -1277,6 +1201,26 @@ function NotifyModal({
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Recipient input */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-secondary-07)", marginBottom: 8 }}>
+                  {recipientLabel}
+                </label>
+                <input
+                  type={recipientType}
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  placeholder={recipientPlaceholder}
+                  style={{
+                    width: "100%", padding: "10px 12px", borderRadius: 6, fontSize: "0.9rem",
+                    border: "1.5px solid var(--color-secondary-04)", outline: "none",
+                    color: "var(--color-secondary-09)", boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = "var(--color-primary-default)"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--color-secondary-04)"; }}
+                />
               </div>
 
               {/* Message preview */}
@@ -1309,7 +1253,7 @@ function NotifyModal({
                   className="br-button primary"
                   style={{ flex: 2, borderRadius: 6, justifyContent: "center" }}
                   onClick={handleSend}
-                  disabled={sending}
+                  disabled={sending || recipient.trim() === ""}
                 >
                   {sending ? (
                     <>

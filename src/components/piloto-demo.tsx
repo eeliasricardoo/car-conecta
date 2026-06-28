@@ -1,29 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import govBrLogo from "@/assets/govbr-logo.svg";
 import { useState, useEffect } from "react";
-import { useDiagnostico } from "../hooks/use-diagnostico";
-import type { DiagnosticoResult } from "../lib/services/diagnostico-engine";
+import { useDiagnostico } from "@/hooks/use-diagnostico";
+import type { DiagnosticoResult } from "@/lib/services/diagnostico-engine";
 
-export const Route = createFileRoute("/piloto")({
-  head: () => ({
-    meta: [
-      { title: "Demonstração — CAR Proativo" },
-      {
-        name: "description",
-        content:
-          "Demonstração interativa do CAR Proativo: motor de diagnóstico, API e fluxo de resolução em 5 telas.",
-      },
-    ],
-  }),
-  component: PilotoPage,
-});
 
 // ── Demo CPFs (válidos pelo algoritmo oficial) ────────────────────────────────
 
 // CPFs reais do ambiente de testes haCARthon (car-sus.dataprev.gov.br)
 const DEMO_CPFS = [
-  { cpf: "107.282.101-00", label: "Usuário 1 · pendente", hint: "Env. testes SICAR" },
-  { cpf: "287.016.154-91", label: "Usuário 2 · sobreposição", hint: "Env. testes SICAR" },
+  { cpf: "107.282.101-00", label: "Usuário 1 · pendente", hint: "Env. testes SICAR (Sistema de Cadastro Ambiental Rural)" },
+  { cpf: "287.016.154-91", label: "Usuário 2 · sobreposição", hint: "Env. testes SICAR (Sistema de Cadastro Ambiental Rural)" },
+  { cpf: "321.654.987-91", label: "Demo · cancelado", hint: "Dados exemplo" },
+  { cpf: "555.666.777-20", label: "Demo · dados incorretos", hint: "Dados exemplo" },
   { cpf: "111.222.333-96", label: "Demo · regular", hint: "Dados exemplo" },
 ];
 
@@ -53,7 +42,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-function PilotoPage() {
+export function PilotoPage() {
   const [activeTab, setActiveTab] = useState<"motor" | "api" | "fluxo">("motor");
   const [diagnostico, setDiagnostico] = useState<DiagnosticoResult | null>(null);
 
@@ -374,11 +363,11 @@ function DiagnosticEngine({
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {[
-                    { icon: "fa-database", label: "Consultando SICAR…" },
-                    { icon: "fa-map", label: "Cruzando com INCRA…" },
+                    { icon: "fa-database", label: "Consultando SICAR (Sistema de Cadastro Ambiental Rural)…" },
+                    { icon: "fa-map", label: "Cruzando com INCRA (Instituto Nacional de Colonização e Reforma Agrária)…" },
                     { icon: "fa-satellite", label: "Verificando MapBiomas…" },
                     { icon: "fa-id-card", label: "Conferindo Receita Federal…" },
-                    { icon: "fa-globe", label: "Enriquecendo com IBGE…" },
+                    { icon: "fa-globe", label: "Enriquecendo com IBGE (Instituto Brasileiro de Geografia e Estatística)…" },
                   ].map((s) => (
                     <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 12, opacity: 0.6 }}>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--color-secondary-03)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -467,7 +456,7 @@ function DiagnosticEngine({
             {[
               {
                 icon: "fa-database",
-                title: "SICAR",
+                title: "SICAR (Sistema de Cadastro Ambiental Rural)",
                 desc: "Base oficial com 7M+ cadastros.",
               },
               {
@@ -478,12 +467,12 @@ function DiagnosticEngine({
               {
                 icon: "fa-code",
                 title: "API de diagnóstico",
-                desc: "REST credenciada via convênio com o MMA. Retorna status + ação por CPF/CNPJ.",
+                desc: "REST credenciada via convênio com o MMA (Ministério do Meio Ambiente). Retorna status + ação por CPF (Cadastro de Pessoas Físicas) / CNPJ (Cadastro Nacional da Pessoa Jurídica).",
               },
               {
                 icon: "fa-handshake",
                 title: "Parceiros",
-                desc: "Bancos, cooperativas, tradings, EMATER, secretarias estaduais.",
+                desc: "Bancos, cooperativas, tradings, EMATER (Empresa de Assistência Técnica e Extensão Rural), secretarias estaduais.",
               },
               {
                 icon: "fa-comments",
@@ -493,11 +482,11 @@ function DiagnosticEngine({
               {
                 icon: "fa-tasks",
                 title: "Fluxo de resolução",
-                desc: "5 telas, OCR de documento, confirmação de polígono.",
+                desc: "5 telas, OCR (reconhecimento óptico de caracteres) de documento, confirmação de polígono.",
               },
               {
                 icon: "fa-check-circle",
-                title: "Retorno ao SICAR",
+                title: "Retorno ao SICAR (Sistema de Cadastro Ambiental Rural)",
                 desc: "Dados corrigidos voltam direto via módulo oficial de retificação.",
               },
             ].map((row, i) => (
@@ -783,17 +772,17 @@ const FALLBACK_DIAGNOSTICO: DiagnosticoResult = {
     uf: "MT",
     data_inscricao: "2019-06-14",
     data_ultima_atualizacao: "2022-11-08",
-    pendencias: ["CCIR vencido desde 11/2022", "Comprovante de domínio desatualizado"],
+    pendencias: ["CCIR (Certificado de Cadastro de Imóvel Rural) vencido desde 11/2022", "Comprovante de domínio desatualizado"],
     codigos_sncr: ["9130730239223", "9130730254613"],
     dado_real: false,
   },
   municipio: { ibge: "5102504", nome: "Cáceres", uf: "MT", nomeUf: "Mato Grosso" },
   fontes: [
     { nome: "SICAR", status: "alerta", descricao: "Dados de demonstração (credencial pendente).", dado_real: false },
-    { nome: "INCRA / SIGEF", status: "ok", descricao: "Cruzamento fundiário — requer credencial INCRA.", dado_real: false },
+    { nome: "INCRA (Instituto Nacional de Colonização e Reforma Agrária) / SIGEF (Sistema de Gestão Fundiária)", status: "ok", descricao: "Cruzamento fundiário — requer credencial INCRA.", dado_real: false },
     { nome: "MapBiomas", status: "ok", descricao: "Uso do solo — requer token MapBiomas.", dado_real: false },
     { nome: "Receita Federal", status: "ok", descricao: "CPF válido pelo algoritmo oficial.", dado_real: true },
-    { nome: "SICAR Municípios", status: "ok", descricao: "Município via API pública SICAR.", dado_real: true },
+    { nome: "SICAR (Sistema de Cadastro Ambiental Rural) Municípios", status: "ok", descricao: "Município via API (Interface de Programação de Aplicações) pública SICAR.", dado_real: true },
   ],
   nivel_risco: "medio",
   acao_recomendada: "Atualizar documentação via fluxo guiado",
@@ -917,7 +906,7 @@ Accept: application/json`}</pre>
                       Nenhum dado fundiário sensível.
                     </li>
                     <li>
-                      Credenciamento via convênio com o MMA — mesmo modelo do
+                      Credenciamento via convênio com o MMA (Ministério do Meio Ambiente) — mesmo modelo do
                       Serasa.
                     </li>
                     <li>Logs auditáveis por CPF consultado.</li>
@@ -1061,8 +1050,8 @@ Accept: application/json`}</pre>
 type Scenario = "documento" | "sobreposicao" | "cancelado" | "dados";
 
 const SCENARIO_META: Record<Scenario, { label: string; icon: string; color: string; desc: string }> = {
-  documento:    { label: "Documento desatualizado", icon: "fa-file-alt",        color: "#e65100",                              desc: "CCIR vencido ou comprovante de domínio desatualizado" },
-  sobreposicao: { label: "Sobreposição de área",    icon: "fa-layer-group",     color: "#b71c1c",                              desc: "Conflito de polígono com APP, RL ou outro imóvel" },
+  documento:    { label: "Documento desatualizado", icon: "fa-file-alt",        color: "#e65100",                              desc: "CCIR (Certificado de Cadastro de Imóvel Rural) vencido ou comprovante de domínio desatualizado" },
+  sobreposicao: { label: "Sobreposição de área",    icon: "fa-layer-group",     color: "#b71c1c",                              desc: "Conflito de polígono com APP (Área de Preservação Permanente), RL (Reserva Legal) ou outro imóvel" },
   cancelado:    { label: "CAR cancelado",           icon: "fa-ban",             color: "var(--color-secondary-07)",            desc: "CAR inativado por inconsistência — requer reativação" },
   dados:        { label: "Dados incorretos",        icon: "fa-edit",            color: "#1565c0",                              desc: "Área declarada ou módulos fiscais divergentes" },
 };
@@ -1081,12 +1070,12 @@ const FALLBACK_POR_SCENARIO: Record<Scenario, DiagnosticoResult> = {
       uf: "MT",
       data_inscricao: "2017-03-22",
       data_ultima_atualizacao: "2023-08-15",
-      pendencias: ["Sobreposição de 4,7 ha com APP de nascente (CAR MT-5107925-E2F8)", "Área de Reserva Legal não averbada"],
+      pendencias: ["Sobreposição de 4,7 ha com APP (Área de Preservação Permanente) de nascente (CAR MT-5107925-E2F8)", "Área de Reserva Legal (RL) não averbada"],
       codigos_sncr: [],
       dado_real: false,
     },
     nivel_risco: "alto",
-    acao_recomendada: "Agendar visita técnica EMATER",
+    acao_recomendada: "Agendar visita técnica EMATER (Empresa de Assistência Técnica e Extensão Rural)",
     link_resolucao: null,
   },
   cancelado: {
@@ -1367,7 +1356,7 @@ function buildScreens(
         </div>
         <h3 style={{ color: "var(--color-secondary-09)", fontSize: "1.1rem", margin: "0 0 10px" }}>Documentação enviada para revisão!</h3>
         <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
-          As informações do <strong>{p.nome_imovel}</strong> foram enviadas ao SICAR e estão em <strong>análise técnica</strong>. Confirmação em até <strong>48 horas</strong>.
+          As informações do <strong>{p.nome_imovel}</strong> foram enviadas ao SICAR (Sistema de Cadastro Ambiental Rural) e estão em <strong>análise técnica</strong>. Confirmação em até <strong>48 horas</strong>.
         </p>
         <div style={{ background: "var(--color-secondary-01)", border: "1px solid var(--color-secondary-03)", borderRadius: 8, padding: "10px 14px", marginBottom: 20, textAlign: "left" }}>
           <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--color-secondary-08)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Protocolo</p>
@@ -1389,7 +1378,7 @@ function buildScreens(
         content: (
           <div>
             <p style={{ color: "var(--color-secondary-07)", marginBottom: 16, lineHeight: 1.65, fontSize: "0.875rem" }}>
-              Tire uma foto do seu <strong>CCIR atualizado</strong>. Você pode obter um no site do INCRA gratuitamente.
+              Tire uma foto do seu <strong>CCIR (Certificado de Cadastro de Imóvel Rural) atualizado</strong>. Você pode obter um no site do INCRA (Instituto Nacional de Colonização e Reforma Agrária) gratuitamente.
             </p>
             <div
               style={{ border: "2px dashed var(--color-primary-default)", borderRadius: 10, padding: 32, background: "var(--color-primary-pastel-01)", marginBottom: 16, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}
@@ -1401,11 +1390,11 @@ function buildScreens(
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--color-secondary-06)", fontSize: "0.75rem" }}>
               <i className="fas fa-lock" aria-hidden="true" />
-              <span>Processado localmente via OCR. Não armazenado.</span>
+              <span>Processado localmente via OCR (reconhecimento óptico de caracteres). Não armazenado.</span>
             </div>
             <button onClick={() => setScreen(2)} style={{ marginTop: 12, background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--color-primary-default)", fontSize: "0.8125rem", fontWeight: 500, textDecoration: "underline" }}>
               <i className="fas fa-circle-question mr-1" aria-hidden="true" />
-              Não tenho CCIR ou meu CCIR está desatualizado
+              Não tenho CCIR (Certificado de Cadastro de Imóvel Rural) ou meu CCIR está desatualizado
             </button>
           </div>
         ),
@@ -1415,12 +1404,12 @@ function buildScreens(
         title: "Confirme os dados",
         content: (
           <div>
-            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>O sistema leu os dados via OCR. Confirme se estão corretos:</p>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>O sistema leu os dados via OCR (reconhecimento óptico de caracteres). Confirme se estão corretos:</p>
             <div style={{ background: "var(--color-secondary-01)", borderRadius: 8, padding: 12, marginBottom: 16, border: "1px solid var(--color-secondary-03)" }}>
               {[
                 { label: "Imóvel", value: p.nome_imovel },
                 { label: "Município", value: `${p.nome_municipio}, ${p.uf}` },
-                { label: "CCIR nº", value: "1234567-89" },
+                { label: "CCIR (Certificado de Cadastro de Imóvel Rural) nº", value: "1234567-89" },
                 { label: "Validade", value: "03/2027" },
               ].map(row => (
                 <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid var(--color-secondary-03)", fontSize: "0.8rem" }}>
@@ -1441,7 +1430,7 @@ function buildScreens(
         title: "Limite do imóvel",
         content: (
           <div>
-            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>Limite conforme o INCRA. Confirme ou ajuste um ponto.</p>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>Limite conforme o INCRA (Instituto Nacional de Colonização e Reforma Agrária). Confirme ou ajuste um ponto.</p>
             <div style={{ height: 180, borderRadius: 10, background: "linear-gradient(135deg,#c8e6c9 0%,#a5d6a7 40%,#81c784 100%)", position: "relative", overflow: "hidden", marginBottom: 16, border: "2px solid var(--color-secondary-03)" }}>
               <div style={{ position: "absolute", inset: 0, opacity: 0.25, backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 18px,rgba(0,0,0,0.12) 18px,rgba(0,0,0,0.12) 19px),repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(0,0,0,0.12) 18px,rgba(0,0,0,0.12) 19px)" }} />
               <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
@@ -1451,7 +1440,7 @@ function buildScreens(
                 ))}
               </svg>
               <div style={{ position: "absolute", bottom: 6, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: 4, padding: "3px 8px", fontSize: 10, fontWeight: 700, color: "var(--color-secondary-08)" }}>
-                INCRA · {p.area_ha} ha
+                INCRA (Instituto Nacional de Colonização e Reforma Agrária) · {p.area_ha} ha
               </div>
             </div>
             <button type="button" className="br-button primary" onClick={() => setScreen(4)} style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}>
@@ -1497,7 +1486,7 @@ function buildScreens(
         content: (
           <div>
             <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
-              Área em vermelho indica sobreposição com APP de nascente. A região conflitante é de <strong>4,7 ha</strong>.
+              Área em vermelho indica sobreposição com APP (Área de Preservação Permanente) de nascente. A região conflitante é de <strong>4,7 ha</strong>.
             </p>
             <div style={{ height: 190, borderRadius: 10, background: "linear-gradient(135deg,#c8e6c9 0%,#a5d6a7 40%,#81c784 100%)", position: "relative", overflow: "hidden", marginBottom: 16, border: "2px solid #e57373" }}>
               <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
@@ -1527,11 +1516,11 @@ function buildScreens(
                 Por que não dá para resolver sozinho?
               </p>
               <p style={{ margin: 0, color: "var(--color-secondary-07)", fontSize: "0.8rem", lineHeight: 1.6 }}>
-                Sobreposição com APP requer laudo técnico de engenheiro florestal e aprovação do órgão ambiental estadual. Um técnico da EMATER irá até você com o diagnóstico já preparado.
+                Sobreposição com APP (Área de Preservação Permanente) requer laudo técnico de engenheiro florestal e aprovação do órgão ambiental estadual. Um técnico da EMATER (Empresa de Assistência Técnica e Extensão Rural) irá até você com o diagnóstico já preparado.
               </p>
             </div>
             <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
-              Quer agendar uma visita do técnico da EMATER? O diagnóstico já estará com ele — você não precisa explicar nada do zero.
+              Quer agendar uma visita do técnico da EMATER (Empresa de Assistência Técnica e Extensão Rural)? O diagnóstico já estará com ele — você não precisa explicar nada do zero.
             </p>
             <button type="button" className="br-button primary" onClick={() => setScreen(3)} style={{ borderRadius: 8, width: "100%" }}>
               <i className="fas fa-calendar-alt mr-2" aria-hidden="true" />
@@ -1546,7 +1535,7 @@ function buildScreens(
         content: (
           <div>
             <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
-              Escolha a data disponível mais próxima para a visita do técnico da EMATER de <strong>{p.nome_municipio}</strong>:
+              Escolha a data disponível mais próxima para a visita do técnico da EMATER (Empresa de Assistência Técnica e Extensão Rural) de <strong>{p.nome_municipio}</strong>:
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
               {["07/07/2026 – manhã", "09/07/2026 – tarde", "11/07/2026 – manhã"].map((d, i) => (
@@ -1571,7 +1560,7 @@ function buildScreens(
             </div>
             <h3 style={{ color: "var(--color-secondary-09)", fontSize: "1.1rem", margin: "0 0 10px" }}>Visita técnica agendada!</h3>
             <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
-              Um técnico da <strong>EMATER {p.uf}</strong> visitará o <strong>{p.nome_imovel}</strong> em <strong>07/07/2026 – manhã</strong>. O diagnóstico completo já foi enviado para ele.
+              Um técnico da <strong>EMATER (Empresa de Assistência Técnica e Extensão Rural) {p.uf}</strong> visitará o <strong>{p.nome_imovel}</strong> em <strong>07/07/2026 – manhã</strong>. O diagnóstico completo já foi enviado para ele.
             </p>
             <div style={{ background: "var(--color-secondary-01)", border: "1px solid var(--color-secondary-03)", borderRadius: 8, padding: "10px 14px", marginBottom: 20, textAlign: "left" }}>
               <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--color-secondary-08)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Protocolo de agendamento</p>
@@ -1724,14 +1713,14 @@ function buildScreens(
       content: (
         <div>
           <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
-            Polígono extraído do INCRA. Confirme que representa o imóvel corretamente:
+            Polígono extraído do INCRA (Instituto Nacional de Colonização e Reforma Agrária). Confirme que representa o imóvel corretamente:
           </p>
           <div style={{ height: 180, borderRadius: 10, background: "linear-gradient(135deg,#c8e6c9 0%,#a5d6a7 40%,#81c784 100%)", position: "relative", overflow: "hidden", marginBottom: 16, border: "2px solid var(--color-secondary-03)" }}>
             <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
               <polygon points="50,20 230,15 245,140 180,170 40,155" fill="rgba(21,81,180,0.2)" stroke="#1351b4" strokeWidth="2" strokeDasharray="5,3" />
             </svg>
             <div style={{ position: "absolute", bottom: 6, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: 4, padding: "3px 8px", fontSize: 10, fontWeight: 700, color: "var(--color-secondary-08)" }}>
-              INCRA · 98,3 ha
+              INCRA (Instituto Nacional de Colonização e Reforma Agrária) · 98,3 ha
             </div>
           </div>
           <button type="button" className="br-button primary" onClick={() => setScreen(3)} style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}>
@@ -1842,7 +1831,7 @@ function PilotoFooter() {
                 color: "rgba(255,255,255,0.75)",
               }}
             >
-              Camada sobre o SICAR — não substitui, amplifica.
+              Camada sobre o SICAR (Sistema de Cadastro Ambiental Rural) — não substitui, amplifica.
             </p>
           </div>
           <Link

@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WikiRouteImport } from './routes/wiki'
 import { Route as ResultadosRouteImport } from './routes/resultados'
-import { Route as PilotoRouteImport } from './routes/piloto'
 import { Route as ParceiroRouteImport } from './routes/parceiro'
 import { Route as LocalizacaoRouteImport } from './routes/localizacao'
 import { Route as DemoRouteImport } from './routes/demo'
@@ -26,11 +25,6 @@ const WikiRoute = WikiRouteImport.update({
 const ResultadosRoute = ResultadosRouteImport.update({
   id: '/resultados',
   path: '/resultados',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PilotoRoute = PilotoRouteImport.update({
-  id: '/piloto',
-  path: '/piloto',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParceiroRoute = ParceiroRouteImport.update({
@@ -65,7 +59,6 @@ export interface FileRoutesByFullPath {
   '/demo': typeof DemoRoute
   '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
-  '/piloto': typeof PilotoRoute
   '/resultados': typeof ResultadosRoute
   '/wiki': typeof WikiRoute
 }
@@ -75,7 +68,6 @@ export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
   '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
-  '/piloto': typeof PilotoRoute
   '/resultados': typeof ResultadosRoute
   '/wiki': typeof WikiRoute
 }
@@ -86,7 +78,6 @@ export interface FileRoutesById {
   '/demo': typeof DemoRoute
   '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
-  '/piloto': typeof PilotoRoute
   '/resultados': typeof ResultadosRoute
   '/wiki': typeof WikiRoute
 }
@@ -98,7 +89,6 @@ export interface FileRouteTypes {
     | '/demo'
     | '/localizacao'
     | '/parceiro'
-    | '/piloto'
     | '/resultados'
     | '/wiki'
   fileRoutesByTo: FileRoutesByTo
@@ -108,7 +98,6 @@ export interface FileRouteTypes {
     | '/demo'
     | '/localizacao'
     | '/parceiro'
-    | '/piloto'
     | '/resultados'
     | '/wiki'
   id:
@@ -118,7 +107,6 @@ export interface FileRouteTypes {
     | '/demo'
     | '/localizacao'
     | '/parceiro'
-    | '/piloto'
     | '/resultados'
     | '/wiki'
   fileRoutesById: FileRoutesById
@@ -129,7 +117,6 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   LocalizacaoRoute: typeof LocalizacaoRoute
   ParceiroRoute: typeof ParceiroRoute
-  PilotoRoute: typeof PilotoRoute
   ResultadosRoute: typeof ResultadosRoute
   WikiRoute: typeof WikiRoute
 }
@@ -148,13 +135,6 @@ declare module '@tanstack/react-router' {
       path: '/resultados'
       fullPath: '/resultados'
       preLoaderRoute: typeof ResultadosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/piloto': {
-      id: '/piloto'
-      path: '/piloto'
-      fullPath: '/piloto'
-      preLoaderRoute: typeof PilotoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parceiro': {
@@ -201,7 +181,6 @@ const rootRouteChildren: RootRouteChildren = {
   DemoRoute: DemoRoute,
   LocalizacaoRoute: LocalizacaoRoute,
   ParceiroRoute: ParceiroRoute,
-  PilotoRoute: PilotoRoute,
   ResultadosRoute: ResultadosRoute,
   WikiRoute: WikiRoute,
 }
