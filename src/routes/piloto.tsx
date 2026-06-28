@@ -1058,451 +1058,99 @@ Accept: application/json`}</pre>
 
 // ── 03 · Resolution Flow ─────────────────────────────────────────────────────
 
-function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null }) {
-  const d = diagnostico && diagnostico.sicar?.status !== "regular" && diagnostico.sicar?.status !== "sobreposicao"
-    ? diagnostico
-    : FALLBACK_DIAGNOSTICO;
-  const p = d.sicar!;
+type Scenario = "documento" | "sobreposicao" | "cancelado" | "dados";
 
+const SCENARIO_META: Record<Scenario, { label: string; icon: string; color: string; desc: string }> = {
+  documento:    { label: "Documento desatualizado", icon: "fa-file-alt",        color: "#e65100",                              desc: "CCIR vencido ou comprovante de domínio desatualizado" },
+  sobreposicao: { label: "Sobreposição de área",    icon: "fa-layer-group",     color: "#b71c1c",                              desc: "Conflito de polígono com APP, RL ou outro imóvel" },
+  cancelado:    { label: "CAR cancelado",           icon: "fa-ban",             color: "var(--color-secondary-07)",            desc: "CAR inativado por inconsistência — requer reativação" },
+  dados:        { label: "Dados incorretos",        icon: "fa-edit",            color: "#1565c0",                              desc: "Área declarada ou módulos fiscais divergentes" },
+};
+
+const FALLBACK_POR_SCENARIO: Record<Scenario, DiagnosticoResult> = {
+  documento: FALLBACK_DIAGNOSTICO,
+  sobreposicao: {
+    ...FALLBACK_DIAGNOSTICO,
+    sicar: {
+      codigo_car: "MT-5107925-D5F9B3C2A7E1",
+      status: "sobreposicao",
+      nome_imovel: "Fazenda Santa Luzia",
+      area_ha: 210.5,
+      codigo_ibge_municipio: "5107925",
+      nome_municipio: "Sorriso",
+      uf: "MT",
+      data_inscricao: "2017-03-22",
+      data_ultima_atualizacao: "2023-08-15",
+      pendencias: ["Sobreposição de 4,7 ha com APP de nascente (CAR MT-5107925-E2F8)", "Área de Reserva Legal não averbada"],
+      codigos_sncr: [],
+      dado_real: false,
+    },
+    nivel_risco: "alto",
+    acao_recomendada: "Agendar visita técnica EMATER",
+    link_resolucao: null,
+  },
+  cancelado: {
+    ...FALLBACK_DIAGNOSTICO,
+    sicar: {
+      codigo_car: "PA-1501402-C3D7E1F4A2B8",
+      status: "cancelado",
+      nome_imovel: "Sítio Paraíso Verde",
+      area_ha: 32.1,
+      codigo_ibge_municipio: "1501402",
+      nome_municipio: "Belém",
+      uf: "PA",
+      data_inscricao: "2016-09-10",
+      data_ultima_atualizacao: "2021-04-22",
+      pendencias: ["CAR cancelado por inconsistência nos dados de domínio", "Ausência de documentação na análise de 2021"],
+      codigos_sncr: [],
+      dado_real: false,
+    },
+    nivel_risco: "alto",
+    acao_recomendada: "Solicitar reativação junto ao órgão estadual",
+    link_resolucao: null,
+  },
+  dados: {
+    ...FALLBACK_DIAGNOSTICO,
+    sicar: {
+      codigo_car: "GO-5208707-A1B3C5D7E9F2",
+      status: "pendente",
+      nome_imovel: "Fazenda Boa Colheita",
+      area_ha: 124.8,
+      codigo_ibge_municipio: "5208707",
+      nome_municipio: "Goiânia",
+      uf: "GO",
+      data_inscricao: "2020-03-15",
+      data_ultima_atualizacao: "2023-01-10",
+      pendencias: ["Área declarada (124,8 ha) diverge do polígono registrado (98,3 ha)", "Módulos fiscais não atualizados"],
+      codigos_sncr: [],
+      dado_real: false,
+    },
+    nivel_risco: "medio",
+    acao_recomendada: "Corrigir dados cadastrais via formulário guiado",
+    link_resolucao: "https://carproativo.gov.br/resolver?car=GO-5208707-A1B3C5D7E9F2",
+  },
+};
+
+function detectScenario(diagnostico: DiagnosticoResult | null): Scenario {
+  const status = diagnostico?.sicar?.status;
+  if (status === "sobreposicao") return "sobreposicao";
+  if (status === "cancelado") return "cancelado";
+  const pends = diagnostico?.sicar?.pendencias ?? [];
+  if (pends.some(p => p.toLowerCase().includes("área") || p.toLowerCase().includes("módulo"))) return "dados";
+  return "documento";
+}
+
+function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null }) {
+  const autoScenario = detectScenario(diagnostico);
+  const [scenario, setScenario] = useState<Scenario>(autoScenario);
   const [screen, setScreen] = useState(0);
 
-  const screens = [
-    {
-      icon: "fa-exclamation-triangle",
-      accentColor: "#e65100",
-      title: "Problema identificado",
-      content: (
-        <div>
-          <div
-            style={{
-              background: "var(--color-warning-pastel, #fff3e0)",
-              border: "1px solid var(--color-warning-default, #e65100)",
-              borderRadius: 10,
-              padding: 16,
-              marginBottom: 16,
-            }}
-          >
-            <p
-              style={{
-                margin: "0 0 6px",
-                fontWeight: 700,
-                color: "#e65100",
-                fontSize: "0.875rem",
-              }}
-            >
-              <i
-                className="fas fa-exclamation-triangle mr-2"
-                aria-hidden="true"
-              />
-              {p.pendencias[0] ?? "Pendência identificada"}
-            </p>
-            <p
-              style={{
-                margin: 0,
-                color: "var(--color-secondary-07)",
-                fontSize: "0.8rem",
-                lineHeight: 1.6,
-              }}
-            >
-              {p.pendencias.slice(1).join(" · ") || "Verifique a documentação do imóvel."}
-            </p>
-          </div>
-          <p
-            style={{
-              color: "var(--color-secondary-07)",
-              lineHeight: 1.65,
-              margin: "0 0 20px",
-              fontSize: "0.875rem",
-            }}
-          >
-            Seu CAR do <strong>{p.nome_imovel}</strong> precisa de atenção. Isso
-            pode impedir acesso a crédito rural. Vamos resolver agora? Leva
-            menos de 5 minutos.
-          </p>
-          <button
-            type="button"
-            className="br-button primary"
-            onClick={() => setScreen(1)}
-            style={{ borderRadius: 8, width: "100%" }}
-          >
-            Sim, vamos corrigir
-            <i className="fas fa-arrow-right ml-2" aria-hidden="true" />
-          </button>
-        </div>
-      ),
-    },
-    {
-      icon: "fa-camera",
-      accentColor: "var(--color-primary-default)",
-      title: "Foto do documento",
-      content: (
-        <div>
-          <p
-            style={{
-              color: "var(--color-secondary-07)",
-              marginBottom: 16,
-              lineHeight: 1.65,
-              fontSize: "0.875rem",
-            }}
-          >
-            Tire uma foto do seu <strong>CCIR atualizado</strong>. Você pode
-            obter um no site do INCRA gratuitamente.
-          </p>
-          <div
-            style={{
-              border: "2px dashed var(--color-primary-default)",
-              borderRadius: 10,
-              padding: 32,
-              background: "var(--color-primary-pastel-01)",
-              marginBottom: 16,
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-            }}
-            onClick={() => setTimeout(() => setScreen(2), 500)}
-          >
-            <i
-              className="fas fa-camera"
-              style={{
-                fontSize: 40,
-                color: "var(--color-primary-default)",
-                marginBottom: 10,
-                display: "block",
-                margin: "0 auto 10px",
-                float: "none",
-              }}
-              aria-hidden="true"
-            />
-            <p
-              style={{
-                margin: "0 0 4px",
-                fontWeight: 700,
-                color: "var(--color-primary-default)",
-                fontSize: "0.875rem",
-              }}
-            >
-              Toque para fotografar
-            </p>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.75rem",
-                color: "var(--color-secondary-07)",
-              }}
-            >
-              ou arraste o arquivo aqui
-            </p>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              color: "var(--color-secondary-06)",
-              fontSize: "0.75rem",
-            }}
-          >
-            <i className="fas fa-lock" aria-hidden="true" />
-            <span>Processado localmente via OCR. Não armazenado.</span>
-          </div>
-          <button
-            onClick={() => setTimeout(() => setScreen(2), 300)}
-            style={{
-              marginTop: 12,
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              color: "var(--color-primary-default)",
-              fontSize: "0.8125rem",
-              fontWeight: 500,
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-            }}
-          >
-            <i className="fas fa-circle-question" style={{ fontSize: "0.875rem" }} aria-hidden="true" />
-            Não tenho CCIR ou meu CCIR está desatualizado
-          </button>
-        </div>
-      ),
-    },
-    {
-      icon: "fa-check",
-      accentColor: "var(--color-success-default, #168821)",
-      title: "Confirme os dados",
-      content: (
-        <div>
-          <p
-            style={{
-              color: "var(--color-secondary-07)",
-              marginBottom: 14,
-              lineHeight: 1.65,
-              fontSize: "0.875rem",
-            }}
-          >
-            O sistema leu os dados via OCR. Confirme se estão corretos:
-          </p>
-          <div
-            style={{
-              background: "var(--color-secondary-01)",
-              borderRadius: 8,
-              padding: 12,
-              marginBottom: 16,
-              border: "1px solid var(--color-secondary-03)",
-            }}
-          >
-            {[
-              { label: "Imóvel", value: p.nome_imovel },
-              { label: "Município", value: d.municipio ? `${d.municipio.nome}, ${d.municipio.uf}` : p.nome_municipio },
-              { label: "CCIR nº", value: "1234567-89" },
-              { label: "Validade", value: "03/2027" },
-            ].map((row) => (
-              <div
-                key={row.label}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "7px 0",
-                  borderBottom: "1px solid var(--color-secondary-03)",
-                  fontSize: "0.8rem",
-                }}
-              >
-                <span style={{ color: "var(--color-secondary-07)" }}>
-                  {row.label}
-                </span>
-                <span
-                  style={{
-                    fontWeight: 600,
-                    color: "var(--color-secondary-09)",
-                  }}
-                >
-                  {row.value}
-                </span>
-              </div>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="br-button primary"
-            onClick={() => setScreen(3)}
-            style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}
-          >
-            <i className="fas fa-check mr-2" aria-hidden="true" />
-            Está correto
-          </button>
-          <button
-            type="button"
-            className="br-button secondary"
-            onClick={() => setScreen(1)}
-            style={{ borderRadius: 8, width: "100%" }}
-          >
-            Corrigir manualmente
-          </button>
-        </div>
-      ),
-    },
-    {
-      icon: "fa-map-marked-alt",
-      accentColor: "#00695c",
-      title: "Limite do imóvel",
-      content: (
-        <div>
-          <p
-            style={{
-              color: "var(--color-secondary-07)",
-              marginBottom: 14,
-              lineHeight: 1.65,
-              fontSize: "0.875rem",
-            }}
-          >
-            Limite conforme o INCRA. Confirme ou ajuste um ponto.
-          </p>
-          <div
-            style={{
-              height: 180,
-              borderRadius: 10,
-              background:
-                "linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 40%, #81c784 100%)",
-              position: "relative",
-              overflow: "hidden",
-              marginBottom: 16,
-              border: "2px solid var(--color-secondary-03)",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                opacity: 0.25,
-                backgroundImage:
-                  "repeating-linear-gradient(0deg,transparent,transparent 18px,rgba(0,0,0,0.12) 18px,rgba(0,0,0,0.12) 19px),repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(0,0,0,0.12) 18px,rgba(0,0,0,0.12) 19px)",
-              }}
-            />
-            <svg
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-              }}
-            >
-              <polygon
-                points="72,36 190,28 210,122 144,162 56,134"
-                fill="rgba(21,81,180,0.2)"
-                stroke="#1351b4"
-                strokeWidth="2"
-                strokeDasharray="5,3"
-              />
-              {[
-                [72, 36],
-                [190, 28],
-                [210, 122],
-                [144, 162],
-                [56, 134],
-              ].map(([cx, cy]) => (
-                <circle
-                  key={`${cx}-${cy}`}
-                  cx={cx}
-                  cy={cy}
-                  r="5"
-                  fill="#1351b4"
-                />
-              ))}
-            </svg>
-            <div
-              style={{
-                position: "absolute",
-                bottom: 6,
-                right: 8,
-                background: "rgba(255,255,255,0.9)",
-                borderRadius: 4,
-                padding: "3px 8px",
-                fontSize: 10,
-                fontWeight: 700,
-                color: "var(--color-secondary-08)",
-              }}
-            >
-              INCRA · {p.area_ha} ha
-            </div>
-          </div>
-          <button
-            type="button"
-            className="br-button primary"
-            onClick={() => setScreen(4)}
-            style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}
-          >
-            <i className="fas fa-check mr-2" aria-hidden="true" />
-            Confirmar limite
-          </button>
-          <button
-            type="button"
-            className="br-button secondary"
-            style={{ borderRadius: 8, width: "100%" }}
-          >
-            Ajustar ponto
-          </button>
-        </div>
-      ),
-    },
-    {
-      icon: "fa-star",
-      accentColor: "var(--color-success-default, #168821)",
-      title: "Tudo pronto!",
-      content: (
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              background: "var(--color-success-pastel, #e8f5e9)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 16px",
-            }}
-          >
-            <i
-              className="fas fa-check-circle"
-              style={{
-                fontSize: 44,
-                color: "var(--color-success-default, #168821)",
-              }}
-              aria-hidden="true"
-            />
-          </div>
-          <h3
-            style={{
-              color: "var(--color-secondary-09)",
-              fontSize: "1.1rem",
-              margin: "0 0 10px",
-            }}
-          >
-            CAR atualizado com sucesso!
-          </h3>
-          <p
-            style={{
-              color: "var(--color-secondary-07)",
-              lineHeight: 1.65,
-              margin: "0 0 20px",
-              fontSize: "0.875rem",
-            }}
-          >
-            As informações do <strong>{p.nome_imovel}</strong> foram enviadas ao
-            SICAR via módulo oficial de retificação. Confirmação em até{" "}
-            <strong>48 horas</strong>.
-          </p>
-          <div
-            style={{
-              background: "var(--color-secondary-01)",
-              border: "1px solid var(--color-secondary-03)",
-              borderRadius: 8,
-              padding: "10px 14px",
-              marginBottom: 20,
-              textAlign: "left",
-            }}
-          >
-            <p
-              style={{
-                margin: "0 0 4px",
-                fontWeight: 700,
-                color: "var(--color-secondary-08)",
-                fontSize: "0.75rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
-              Protocolo
-            </p>
-            <p
-              style={{
-                margin: 0,
-                fontFamily: "monospace",
-                color: "var(--color-primary-default)",
-                fontSize: "0.875rem",
-              }}
-            >
-              CAR-2026-{Math.floor(Math.random() * 900000 + 100000)}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="br-button secondary"
-            onClick={() => setScreen(0)}
-            style={{ borderRadius: 8, width: "100%" }}
-          >
-            Reiniciar demonstração
-          </button>
-        </div>
-      ),
-    },
-  ];
+  const d = (diagnostico && diagnostico.sicar?.status !== "regular")
+    ? diagnostico
+    : FALLBACK_POR_SCENARIO[scenario];
+  const p = d.sicar!;
+
+  const screens = buildScreens(scenario, p, d, setScreen);
 
   const current = screens[screen];
 
@@ -1511,59 +1159,59 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
       <section className="py-5">
         <div className="container-lg">
           <div className="py-4">
-            <SectionEyebrow
-              icon="fa-mobile-alt"
-              number="03"
-              title="Fluxo de resolução"
-            />
-            <p
-              style={{
-                color: "var(--color-secondary-07)",
-                marginTop: 8,
-                maxWidth: 560,
-                lineHeight: 1.7,
-              }}
-            >
-              Percorra as 5 telas como o produtor rural veria no celular — sem
-              instalar nenhum aplicativo.
+            <SectionEyebrow icon="fa-mobile-alt" number="03" title="Fluxo de resolução" />
+            <p style={{ color: "var(--color-secondary-07)", marginTop: 8, maxWidth: 560, lineHeight: 1.7 }}>
+              Cada tipo de pendência tem um fluxo diferente. Selecione o cenário para ver como o produtor resolveria no celular.
             </p>
           </div>
 
-          {diagnostico && diagnostico.sicar?.status === "sobreposicao" && (
-            <div
-              className="br-card mb-5"
-              style={{
-                border: "1px solid var(--color-warning-default, #e65100)",
-                background: "var(--color-warning-pastel, #fff3e0)",
-              }}
-            >
-              <div className="card-content d-flex align-items-start" style={{ gap: 14 }}>
-                <i
-                  className="fas fa-info-circle"
-                  style={{ color: "#e65100", fontSize: 20, marginTop: 2, flexShrink: 0 }}
-                  aria-hidden="true"
-                />
-                <p style={{ margin: 0, color: "#bf360c", lineHeight: 1.65, fontSize: "var(--font-size-scale-down-01)" }}>
-                  Casos de sobreposição não passam pelo fluxo automático — vão
-                  direto para agendamento com técnico da EMATER, que recebe o
-                  diagnóstico pré-preenchido e não precisa começar do zero.
-                  A demonstração abaixo usa o caso padrão (documento desatualizado).
-                </p>
-              </div>
-            </div>
-          )}
+          {/* Scenario tabs */}
+          <div className="d-flex flex-wrap mb-5" style={{ gap: 8 }}>
+            {(Object.entries(SCENARIO_META) as [Scenario, typeof SCENARIO_META[Scenario]][]).map(([key, meta]) => {
+              const active = scenario === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => { setScenario(key); setScreen(0); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    padding: "10px 16px", borderRadius: 8, cursor: "pointer",
+                    background: active ? "var(--color-primary-default)" : "var(--color-secondary-01)",
+                    color: active ? "#fff" : "var(--color-secondary-08)",
+                    border: active ? "none" : "1px solid var(--color-secondary-04)",
+                    fontWeight: active ? 700 : 500,
+                    fontSize: "var(--font-size-scale-down-01)",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <i className={`fas ${meta.icon}`} aria-hidden="true" />
+                  {meta.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Scenario description */}
+          <div style={{
+            background: "var(--color-secondary-01)",
+            border: "1px solid var(--color-secondary-03)",
+            borderRadius: 8, padding: "12px 16px", marginBottom: 32,
+            display: "flex", alignItems: "center", gap: 10,
+          }}>
+            <i className={`fas ${SCENARIO_META[scenario].icon}`} style={{ color: SCENARIO_META[scenario].color, fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
+            <span style={{ color: "var(--color-secondary-07)", fontSize: "0.875rem" }}>
+              <strong style={{ color: "var(--color-secondary-08)" }}>{SCENARIO_META[scenario].label}:</strong>{" "}
+              {SCENARIO_META[scenario].desc}
+            </span>
+          </div>
 
           <div className="row">
             {/* Progress */}
             <div className="col-md-4 mb-5 mb-md-0">
               <div className="br-card progress-sidebar" style={{ position: "sticky", top: 80 }}>
                 <div className="card-header">
-                  <h3
-                    className="mb-0"
-                    style={{ fontSize: "var(--font-size-scale-up-01)" }}
-                  >
-                    Progresso
-                  </h3>
+                  <h3 className="mb-0" style={{ fontSize: "var(--font-size-scale-up-01)" }}>Progresso</h3>
                 </div>
                 <div className="card-content">
                   <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -1571,68 +1219,19 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
                       const done = i < screen;
                       const active = i === screen;
                       return (
-                        <li
-                          key={s.title}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            padding: "10px 0",
-                            borderBottom:
-                              i < screens.length - 1
-                                ? "1px solid var(--color-secondary-02)"
-                                : "none",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 30,
-                              height: 30,
-                              borderRadius: "50%",
-                              background: done
-                                ? "var(--color-success-default, #168821)"
-                                : active
-                                ? "var(--color-primary-default)"
-                                : "var(--color-secondary-03)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0,
-                              transition: "background 0.3s",
-                            }}
-                          >
-                            {done ? (
-                              <i
-                                className="fas fa-check"
-                                style={{ color: "var(--pure-0)", fontSize: 11 }}
-                                aria-hidden="true"
-                              />
-                            ) : (
-                              <span
-                                style={{
-                                  color: active
-                                    ? "var(--pure-0)"
-                                    : "var(--color-secondary-06)",
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                }}
-                              >
-                                {i + 1}
-                              </span>
-                            )}
+                        <li key={s.title} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < screens.length - 1 ? "1px solid var(--color-secondary-02)" : "none" }}>
+                          <div style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: done ? "var(--color-success-default, #168821)" : active ? "var(--color-primary-default)" : "var(--color-secondary-03)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0, transition: "background 0.3s",
+                          }}>
+                            {done
+                              ? <i className="fas fa-check" style={{ color: "#fff", fontSize: 11 }} aria-hidden="true" />
+                              : <span style={{ color: active ? "#fff" : "var(--color-secondary-06)", fontSize: 11, fontWeight: 700 }}>{i + 1}</span>
+                            }
                           </div>
-                          <span
-                            className="step-label"
-                            style={{
-                              fontSize: "var(--font-size-scale-down-01)",
-                              fontWeight: active ? 700 : 400,
-                              color: done
-                                ? "var(--color-success-default, #168821)"
-                                : active
-                                ? "var(--color-secondary-09)"
-                                : "var(--color-secondary-05)",
-                            }}
-                          >
+                          <span className="step-label" style={{ fontSize: "var(--font-size-scale-down-01)", fontWeight: active ? 700 : 400, color: done ? "var(--color-success-default, #168821)" : active ? "var(--color-secondary-09)" : "var(--color-secondary-05)" }}>
                             {s.title}
                           </span>
                         </li>
@@ -1646,162 +1245,44 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
             {/* Phone mockup */}
             <div className="col-md-8">
               <div className="phone-mockup-wrap" style={{ maxWidth: 360, margin: "0 auto" }}>
-                <div
-                  style={{
-                    border: "8px solid var(--color-secondary-09)",
-                    borderRadius: 36,
-                    overflow: "hidden",
-                    boxShadow: "var(--surface-shadow-xl, 0 20px 60px rgba(0,0,0,0.25))",
-                  }}
-                >
+                <div style={{ border: "8px solid var(--color-secondary-09)", borderRadius: 36, overflow: "hidden", boxShadow: "var(--surface-shadow-xl, 0 20px 60px rgba(0,0,0,0.25))" }}>
                   {/* Status bar */}
-                  <div
-                    style={{
-                      background: "var(--color-secondary-09)",
-                      padding: "8px 20px 4px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span
-                      style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}
-                    >
-                      9:41
-                    </span>
+                  <div style={{ background: "var(--color-secondary-09)", padding: "8px 20px 4px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>9:41</span>
                     <div style={{ display: "flex", gap: 5 }}>
-                      <i
-                        className="fas fa-wifi"
-                        style={{ color: "#fff", fontSize: 10 }}
-                        aria-hidden="true"
-                      />
-                      <i
-                        className="fas fa-battery-full"
-                        style={{ color: "#fff", fontSize: 10 }}
-                        aria-hidden="true"
-                      />
+                      <i className="fas fa-wifi" style={{ color: "#fff", fontSize: 10 }} aria-hidden="true" />
+                      <i className="fas fa-battery-full" style={{ color: "#fff", fontSize: 10 }} aria-hidden="true" />
                     </div>
                   </div>
-
                   {/* Browser chrome */}
-                  <div
-                    style={{
-                      background: "var(--color-secondary-02)",
-                      padding: "6px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      borderBottom: "1px solid var(--color-secondary-03)",
-                    }}
-                  >
-                    <i
-                      className="fas fa-lock"
-                      style={{
-                        color: "var(--color-success-default, #168821)",
-                        fontSize: 10,
-                      }}
-                      aria-hidden="true"
-                    />
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: "var(--color-secondary-07)",
-                        flex: 1,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                  <div style={{ background: "var(--color-secondary-02)", padding: "6px 12px", display: "flex", alignItems: "center", gap: 6, borderBottom: "1px solid var(--color-secondary-03)" }}>
+                    <i className="fas fa-lock" style={{ color: "var(--color-success-default, #168821)", fontSize: 10 }} aria-hidden="true" />
+                    <span style={{ fontSize: 11, color: "var(--color-secondary-07)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       carproativo.gov.br/resolver
                     </span>
                   </div>
-
                   {/* Screen */}
-                  <div
-                    style={{ background: "#fff", minHeight: 480, padding: 20 }}
-                  >
+                  <div style={{ background: "#fff", minHeight: 480, padding: 20, display: "flex", flexDirection: "column" }}>
                     {/* App header */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        marginBottom: 16,
-                        paddingBottom: 14,
-                        borderBottom: "1px solid var(--color-secondary-03)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          background: "var(--color-primary-default)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <i
-                          className={`fas ${current.icon}`}
-                          style={{ color: "#fff", fontSize: 14 }}
-                          aria-hidden="true"
-                        />
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid var(--color-secondary-03)" }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--color-primary-default)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <i className={`fas ${current.icon}`} style={{ color: "#fff", fontSize: 14 }} aria-hidden="true" />
                       </div>
                       <div>
-                        <div
-                          style={{
-                            fontWeight: 700,
-                            color: "var(--color-secondary-09)",
-                            fontSize: 13,
-                            lineHeight: 1.1,
-                          }}
-                        >
-                          {current.title}
-                        </div>
-                        <div
-                          style={{
-                            color: "var(--color-secondary-06)",
-                            fontSize: 11,
-                          }}
-                        >
-                          Tela {screen + 1} de {screens.length}
-                        </div>
+                        <div style={{ fontWeight: 700, color: "var(--color-secondary-09)", fontSize: 13, lineHeight: 1.1 }}>{current.title}</div>
+                        <div style={{ color: "var(--color-secondary-06)", fontSize: 11 }}>Tela {screen + 1} de {screens.length}</div>
                       </div>
                     </div>
-
                     {/* Progress bar */}
-                    <div
-                      style={{
-                        height: 3,
-                        background: "var(--color-secondary-03)",
-                        borderRadius: 99,
-                        marginBottom: 18,
-                      }}
-                    >
-                      <div
-                        style={{
-                          height: "100%",
-                          background: "var(--color-primary-default)",
-                          borderRadius: 99,
-                          width: `${((screen + 1) / screens.length) * 100}%`,
-                          transition: "width 0.4s",
-                        }}
-                      />
+                    <div style={{ height: 3, background: "var(--color-secondary-03)", borderRadius: 99, marginBottom: 18 }}>
+                      <div style={{ height: "100%", background: "var(--color-primary-default)", borderRadius: 99, width: `${((screen + 1) / screens.length) * 100}%`, transition: "width 0.4s" }} />
                     </div>
-
-                    {current.content}
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: screen === screens.length - 1 ? "center" : "flex-start" }}>
+                      {current.content}
+                    </div>
                   </div>
                 </div>
-
-                <p
-                  style={{
-                    textAlign: "center",
-                    marginTop: 14,
-                    fontSize: "var(--font-size-scale-down-02)",
-                    color: "var(--color-secondary-06)",
-                  }}
-                >
+                <p style={{ textAlign: "center", marginTop: 14, fontSize: "var(--font-size-scale-down-02)", color: "var(--color-secondary-06)" }}>
                   Interface web responsiva · sem instalar app
                 </p>
               </div>
@@ -1810,68 +1291,27 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
         </div>
       </section>
 
-      {/* CTA strip — mesmo section-accent da home */}
+      {/* CTA strip */}
       <section className="section-accent py-5">
         <div className="container-lg">
           <div className="row py-3 align-items-center">
             <div className="col-md-7 mb-4 mb-md-0">
-              <span
-                style={{
-                  fontSize: "var(--font-size-scale-down-01)",
-                  fontWeight: "var(--font-weight-semi-bold)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.15em",
-                  color: "var(--color-secondary-07)",
-                }}
-              >
+              <span style={{ fontSize: "var(--font-size-scale-down-01)", fontWeight: "var(--font-weight-semi-bold)", textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--color-secondary-07)" }}>
                 Próximo passo
               </span>
-              <h2
-                className="mt-2 text-weight-bold"
-                style={{
-                  fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-                  color: "var(--color-secondary-08)",
-                  lineHeight: 1.2,
-                }}
-              >
-                Mato Grosso. 1 cooperativa. 100 produtores. 30 dias.
+              <h2 className="mt-2 text-weight-bold" style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)", color: "var(--color-secondary-08)", lineHeight: 1.2 }}>
+                Seu cliente com CAR pendente pode resolver hoje.
               </h2>
-              <p
-                className="mt-3"
-                style={{
-                  color: "var(--color-secondary-08)",
-                  lineHeight: 1.7,
-                  opacity: 0.85,
-                  maxWidth: 500,
-                }}
-              >
-                Maior volume de CARs do país, rede densa de cooperativas e
-                tradings. O resultado do piloto vira o argumento de escala para
-                os 7 milhões de cadastros.
-              </p>
             </div>
-            <div className="col-md-5">
-              <div className="row mb-4">
-                {[
-                  { k: "100", v: "produtores" },
-                  { k: "30d", v: "para medir" },
-                  { k: "1", v: "cooperativa" },
-                ].map((s) => (
-                  <div key={s.k} className="col-4">
-                    <div className="pilot-stat">
-                      <div className="pilot-stat-num">{s.k}</div>
-                      <div className="pilot-stat-label">{s.v}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <a
-                href="mailto:contato@carproativo.gov.br"
-                className="br-button primary large block"
-              >
-                <i className="fas fa-envelope mr-2" aria-hidden="true" />
-                Conversar sobre o piloto
-              </a>
+            <div className="col-md-5 d-flex flex-column" style={{ gap: 12 }}>
+              <Link to="/parceiro" className="br-button primary large">
+                <i className="fas fa-sign-in-alt mr-2" aria-hidden="true" />
+                Acessar portal do parceiro
+              </Link>
+              <Link to="/" className="br-button secondary large">
+                <i className="fas fa-arrow-left mr-2" aria-hidden="true" />
+                Voltar à apresentação
+              </Link>
             </div>
           </div>
         </div>
@@ -1879,6 +1319,431 @@ function ResolutionFlow({ diagnostico }: { diagnostico: DiagnosticoResult | null
     </>
   );
 }
+
+// ── Screen builder ────────────────────────────────────────────────────────────
+
+type ScreenDef = { icon: string; title: string; content: React.ReactNode };
+
+function buildScreens(
+  scenario: Scenario,
+  p: import("@/lib/services/sicar").SicarRecord,
+  d: DiagnosticoResult,
+  setScreen: (n: number) => void,
+): ScreenDef[] {
+  const protocolo = `CAR-2026-${Math.floor(Math.random() * 900000 + 100000)}`;
+
+  const screenDiagnostico = (nextScreen: number): ScreenDef => ({
+    icon: "fa-exclamation-triangle",
+    title: "Problema identificado",
+    content: (
+      <div>
+        <div style={{ background: "var(--color-warning-pastel, #fff3e0)", border: "1px solid #e65100", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+          <p style={{ margin: "0 0 6px", fontWeight: 700, color: "#e65100", fontSize: "0.875rem" }}>
+            <i className="fas fa-exclamation-triangle mr-2" aria-hidden="true" />
+            {p.pendencias[0] ?? "Pendência identificada"}
+          </p>
+          <p style={{ margin: 0, color: "var(--color-secondary-07)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+            {p.pendencias.slice(1).join(" · ") || ""}
+          </p>
+        </div>
+        <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
+          Seu CAR do <strong>{p.nome_imovel}</strong> precisa de atenção. Isso pode impedir acesso a crédito rural. Vamos resolver?
+        </p>
+        <button type="button" className="br-button primary" onClick={() => setScreen(nextScreen)} style={{ borderRadius: 8, width: "100%" }}>
+          Sim, vamos corrigir
+          <i className="fas fa-arrow-right ml-2" aria-hidden="true" />
+        </button>
+      </div>
+    ),
+  });
+
+  const screenEnviado = (onReset: () => void): ScreenDef => ({
+    icon: "fa-clock",
+    title: "Enviado para revisão!",
+    content: (
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--color-success-pastel, #e8f5e9)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <i className="fas fa-check-circle" style={{ fontSize: 44, color: "var(--color-success-default, #168821)" }} aria-hidden="true" />
+        </div>
+        <h3 style={{ color: "var(--color-secondary-09)", fontSize: "1.1rem", margin: "0 0 10px" }}>Documentação enviada para revisão!</h3>
+        <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
+          As informações do <strong>{p.nome_imovel}</strong> foram enviadas ao SICAR e estão em <strong>análise técnica</strong>. Confirmação em até <strong>48 horas</strong>.
+        </p>
+        <div style={{ background: "var(--color-secondary-01)", border: "1px solid var(--color-secondary-03)", borderRadius: 8, padding: "10px 14px", marginBottom: 20, textAlign: "left" }}>
+          <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--color-secondary-08)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Protocolo</p>
+          <p style={{ margin: 0, fontFamily: "monospace", color: "var(--color-primary-default)", fontSize: "0.875rem" }}>{protocolo}</p>
+        </div>
+        <button type="button" className="br-button secondary" onClick={onReset} style={{ borderRadius: 8, width: "100%" }}>
+          Reiniciar demonstração
+        </button>
+      </div>
+    ),
+  });
+
+  if (scenario === "documento") {
+    return [
+      screenDiagnostico(1),
+      {
+        icon: "fa-camera",
+        title: "Foto do documento",
+        content: (
+          <div>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 16, lineHeight: 1.65, fontSize: "0.875rem" }}>
+              Tire uma foto do seu <strong>CCIR atualizado</strong>. Você pode obter um no site do INCRA gratuitamente.
+            </p>
+            <div
+              style={{ border: "2px dashed var(--color-primary-default)", borderRadius: 10, padding: 32, background: "var(--color-primary-pastel-01)", marginBottom: 16, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}
+              onClick={() => setTimeout(() => setScreen(2), 500)}
+            >
+              <i className="fas fa-camera" style={{ fontSize: 40, color: "var(--color-primary-default)", marginBottom: 10 }} aria-hidden="true" />
+              <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--color-primary-default)", fontSize: "0.875rem" }}>Toque para fotografar</p>
+              <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--color-secondary-07)" }}>ou arraste o arquivo aqui</p>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--color-secondary-06)", fontSize: "0.75rem" }}>
+              <i className="fas fa-lock" aria-hidden="true" />
+              <span>Processado localmente via OCR. Não armazenado.</span>
+            </div>
+            <button onClick={() => setScreen(2)} style={{ marginTop: 12, background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--color-primary-default)", fontSize: "0.8125rem", fontWeight: 500, textDecoration: "underline" }}>
+              <i className="fas fa-circle-question mr-1" aria-hidden="true" />
+              Não tenho CCIR ou meu CCIR está desatualizado
+            </button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-check",
+        title: "Confirme os dados",
+        content: (
+          <div>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>O sistema leu os dados via OCR. Confirme se estão corretos:</p>
+            <div style={{ background: "var(--color-secondary-01)", borderRadius: 8, padding: 12, marginBottom: 16, border: "1px solid var(--color-secondary-03)" }}>
+              {[
+                { label: "Imóvel", value: p.nome_imovel },
+                { label: "Município", value: `${p.nome_municipio}, ${p.uf}` },
+                { label: "CCIR nº", value: "1234567-89" },
+                { label: "Validade", value: "03/2027" },
+              ].map(row => (
+                <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid var(--color-secondary-03)", fontSize: "0.8rem" }}>
+                  <span style={{ color: "var(--color-secondary-07)" }}>{row.label}</span>
+                  <span style={{ fontWeight: 600, color: "var(--color-secondary-09)" }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="br-button primary" onClick={() => setScreen(3)} style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}>
+              <i className="fas fa-check mr-2" aria-hidden="true" />Está correto
+            </button>
+            <button type="button" className="br-button secondary" onClick={() => setScreen(1)} style={{ borderRadius: 8, width: "100%" }}>Corrigir manualmente</button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-map-marked-alt",
+        title: "Limite do imóvel",
+        content: (
+          <div>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>Limite conforme o INCRA. Confirme ou ajuste um ponto.</p>
+            <div style={{ height: 180, borderRadius: 10, background: "linear-gradient(135deg,#c8e6c9 0%,#a5d6a7 40%,#81c784 100%)", position: "relative", overflow: "hidden", marginBottom: 16, border: "2px solid var(--color-secondary-03)" }}>
+              <div style={{ position: "absolute", inset: 0, opacity: 0.25, backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 18px,rgba(0,0,0,0.12) 18px,rgba(0,0,0,0.12) 19px),repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(0,0,0,0.12) 18px,rgba(0,0,0,0.12) 19px)" }} />
+              <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+                <polygon points="72,36 190,28 210,122 144,162 56,134" fill="rgba(21,81,180,0.2)" stroke="#1351b4" strokeWidth="2" strokeDasharray="5,3" />
+                {[[72,36],[190,28],[210,122],[144,162],[56,134]].map(([cx,cy]) => (
+                  <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="5" fill="#1351b4" />
+                ))}
+              </svg>
+              <div style={{ position: "absolute", bottom: 6, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: 4, padding: "3px 8px", fontSize: 10, fontWeight: 700, color: "var(--color-secondary-08)" }}>
+                INCRA · {p.area_ha} ha
+              </div>
+            </div>
+            <button type="button" className="br-button primary" onClick={() => setScreen(4)} style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}>
+              <i className="fas fa-check mr-2" aria-hidden="true" />Confirmar limite
+            </button>
+            <button type="button" className="br-button secondary" style={{ borderRadius: 8, width: "100%" }}>Ajustar ponto</button>
+          </div>
+        ),
+      },
+      screenEnviado(() => setScreen(0)),
+    ];
+  }
+
+  if (scenario === "sobreposicao") {
+    return [
+      {
+        icon: "fa-layer-group",
+        title: "Conflito detectado",
+        content: (
+          <div>
+            <div style={{ background: "#fce4ec", border: "1px solid #e57373", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+              <p style={{ margin: "0 0 6px", fontWeight: 700, color: "#b71c1c", fontSize: "0.875rem" }}>
+                <i className="fas fa-exclamation-circle mr-2" aria-hidden="true" />
+                Sobreposição de área identificada
+              </p>
+              <p style={{ margin: 0, color: "var(--color-secondary-07)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                {p.pendencias[0]}
+              </p>
+            </div>
+            <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
+              O CAR do <strong>{p.nome_imovel}</strong> tem sobreposição com área protegida. Esse tipo de caso não pode ser resolvido digitalmente — precisa de análise técnica.
+            </p>
+            <button type="button" className="br-button primary" onClick={() => setScreen(1)} style={{ borderRadius: 8, width: "100%" }}>
+              Ver detalhes do conflito
+              <i className="fas fa-arrow-right ml-2" aria-hidden="true" />
+            </button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-map-marked-alt",
+        title: "Área em conflito",
+        content: (
+          <div>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
+              Área em vermelho indica sobreposição com APP de nascente. A região conflitante é de <strong>4,7 ha</strong>.
+            </p>
+            <div style={{ height: 190, borderRadius: 10, background: "linear-gradient(135deg,#c8e6c9 0%,#a5d6a7 40%,#81c784 100%)", position: "relative", overflow: "hidden", marginBottom: 16, border: "2px solid #e57373" }}>
+              <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+                <polygon points="72,36 190,28 210,122 144,162 56,134" fill="rgba(21,81,180,0.15)" stroke="#1351b4" strokeWidth="2" />
+                <polygon points="170,28 210,42 210,90 160,95" fill="rgba(183,28,28,0.35)" stroke="#b71c1c" strokeWidth="2" strokeDasharray="4,3" />
+              </svg>
+              <div style={{ position: "absolute", top: 8, right: 8, background: "#b71c1c", color: "#fff", borderRadius: 4, padding: "2px 8px", fontSize: 10, fontWeight: 700 }}>APP nascente · 4,7 ha</div>
+              <div style={{ position: "absolute", bottom: 6, left: 8, background: "rgba(255,255,255,0.9)", borderRadius: 4, padding: "3px 8px", fontSize: 10, fontWeight: 700, color: "var(--color-secondary-08)" }}>
+                {p.nome_imovel} · {p.area_ha} ha
+              </div>
+            </div>
+            <button type="button" className="br-button primary" onClick={() => setScreen(2)} style={{ borderRadius: 8, width: "100%" }}>
+              Entender próximos passos
+              <i className="fas fa-arrow-right ml-2" aria-hidden="true" />
+            </button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-user-tie",
+        title: "Precisa de técnico",
+        content: (
+          <div>
+            <div style={{ background: "var(--color-primary-pastel-01)", border: "1px solid var(--color-primary-lighten-02, #c5d4eb)", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+              <p style={{ margin: "0 0 8px", fontWeight: 700, color: "var(--color-primary-darken-02)", fontSize: "0.875rem" }}>
+                <i className="fas fa-info-circle mr-2" aria-hidden="true" />
+                Por que não dá para resolver sozinho?
+              </p>
+              <p style={{ margin: 0, color: "var(--color-secondary-07)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                Sobreposição com APP requer laudo técnico de engenheiro florestal e aprovação do órgão ambiental estadual. Um técnico da EMATER irá até você com o diagnóstico já preparado.
+              </p>
+            </div>
+            <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
+              Quer agendar uma visita do técnico da EMATER? O diagnóstico já estará com ele — você não precisa explicar nada do zero.
+            </p>
+            <button type="button" className="br-button primary" onClick={() => setScreen(3)} style={{ borderRadius: 8, width: "100%" }}>
+              <i className="fas fa-calendar-alt mr-2" aria-hidden="true" />
+              Agendar visita técnica
+            </button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-calendar-check",
+        title: "Agendar visita",
+        content: (
+          <div>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
+              Escolha a data disponível mais próxima para a visita do técnico da EMATER de <strong>{p.nome_municipio}</strong>:
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+              {["07/07/2026 – manhã", "09/07/2026 – tarde", "11/07/2026 – manhã"].map((d, i) => (
+                <button key={d} type="button"
+                  onClick={() => setScreen(4)}
+                  style={{ padding: "10px 14px", borderRadius: 8, border: i === 0 ? "2px solid var(--color-primary-default)" : "1px solid var(--color-secondary-04)", background: i === 0 ? "var(--color-primary-pastel-01)" : "#fff", cursor: "pointer", textAlign: "left", fontSize: "0.875rem", color: i === 0 ? "var(--color-primary-darken-02)" : "var(--color-secondary-08)", fontWeight: i === 0 ? 600 : 400 }}>
+                  <i className="fas fa-calendar mr-2" aria-hidden="true" />{d}
+                  {i === 0 && <span style={{ float: "right", fontSize: "0.75rem", color: "var(--color-primary-default)" }}>Recomendado</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-clock",
+        title: "Visita agendada!",
+        content: (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--color-primary-pastel-01)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <i className="fas fa-calendar-check" style={{ fontSize: 36, color: "var(--color-primary-default)" }} aria-hidden="true" />
+            </div>
+            <h3 style={{ color: "var(--color-secondary-09)", fontSize: "1.1rem", margin: "0 0 10px" }}>Visita técnica agendada!</h3>
+            <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
+              Um técnico da <strong>EMATER {p.uf}</strong> visitará o <strong>{p.nome_imovel}</strong> em <strong>07/07/2026 – manhã</strong>. O diagnóstico completo já foi enviado para ele.
+            </p>
+            <div style={{ background: "var(--color-secondary-01)", border: "1px solid var(--color-secondary-03)", borderRadius: 8, padding: "10px 14px", marginBottom: 20, textAlign: "left" }}>
+              <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--color-secondary-08)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Protocolo de agendamento</p>
+              <p style={{ margin: 0, fontFamily: "monospace", color: "var(--color-primary-default)", fontSize: "0.875rem" }}>{protocolo}</p>
+            </div>
+            <button type="button" className="br-button secondary" onClick={() => setScreen(0)} style={{ borderRadius: 8, width: "100%" }}>Reiniciar demonstração</button>
+          </div>
+        ),
+      },
+    ];
+  }
+
+  if (scenario === "cancelado") {
+    return [
+      {
+        icon: "fa-ban",
+        title: "CAR cancelado",
+        content: (
+          <div>
+            <div style={{ background: "#eeeeee", border: "1px solid #bdbdbd", borderRadius: 10, padding: 16, marginBottom: 16 }}>
+              <p style={{ margin: "0 0 6px", fontWeight: 700, color: "#616161", fontSize: "0.875rem" }}>
+                <i className="fas fa-ban mr-2" aria-hidden="true" />
+                Cadastro cancelado desde 2021
+              </p>
+              <p style={{ margin: 0, color: "var(--color-secondary-07)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                {p.pendencias[0]}
+              </p>
+            </div>
+            <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
+              O CAR do <strong>{p.nome_imovel}</strong> foi cancelado pelo órgão estadual. É necessário solicitar a reativação com documentação atualizada.
+            </p>
+            <button type="button" className="br-button primary" onClick={() => setScreen(1)} style={{ borderRadius: 8, width: "100%" }}>
+              Entender como reativar
+              <i className="fas fa-arrow-right ml-2" aria-hidden="true" />
+            </button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-info-circle",
+        title: "Motivo do cancelamento",
+        content: (
+          <div>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
+              O cancelamento ocorreu após análise do órgão estadual em <strong>abril de 2021</strong>. Os motivos foram:
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+              {p.pendencias.map(pend => (
+                <div key={pend} style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "var(--color-secondary-01)", borderRadius: 8, padding: "10px 12px", border: "1px solid var(--color-secondary-03)" }}>
+                  <i className="fas fa-circle" style={{ color: "#b71c1c", fontSize: 6, marginTop: 6, flexShrink: 0 }} aria-hidden="true" />
+                  <span style={{ fontSize: "0.8rem", color: "var(--color-secondary-07)", lineHeight: 1.6 }}>{pend}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ color: "var(--color-secondary-07)", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: 16 }}>
+              Para reativar, você precisará enviar uma nova declaração com documentação de domínio atualizada.
+            </p>
+            <button type="button" className="br-button primary" onClick={() => setScreen(2)} style={{ borderRadius: 8, width: "100%" }}>
+              Iniciar solicitação de reativação
+              <i className="fas fa-arrow-right ml-2" aria-hidden="true" />
+            </button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-file-signature",
+        title: "Solicitar reativação",
+        content: (
+          <div>
+            <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
+              Confirme os dados do imóvel. A documentação será enviada ao órgão ambiental do <strong>{p.uf}</strong> para análise.
+            </p>
+            <div style={{ background: "var(--color-secondary-01)", borderRadius: 8, padding: 12, marginBottom: 16, border: "1px solid var(--color-secondary-03)" }}>
+              {[
+                { label: "Imóvel", value: p.nome_imovel },
+                { label: "Município", value: `${p.nome_municipio}, ${p.uf}` },
+                { label: "Área declarada", value: `${p.area_ha} ha` },
+                { label: "CAR original", value: p.codigo_car },
+              ].map(row => (
+                <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid var(--color-secondary-03)", fontSize: "0.8rem" }}>
+                  <span style={{ color: "var(--color-secondary-07)" }}>{row.label}</span>
+                  <span style={{ fontWeight: 600, color: "var(--color-secondary-09)" }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="br-button primary" onClick={() => setScreen(3)} style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}>
+              <i className="fas fa-paper-plane mr-2" aria-hidden="true" />
+              Enviar solicitação
+            </button>
+          </div>
+        ),
+      },
+      {
+        icon: "fa-clock",
+        title: "Solicitação enviada!",
+        content: (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--color-success-pastel, #e8f5e9)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <i className="fas fa-check-circle" style={{ fontSize: 44, color: "var(--color-success-default, #168821)" }} aria-hidden="true" />
+            </div>
+            <h3 style={{ color: "var(--color-secondary-09)", fontSize: "1.1rem", margin: "0 0 10px" }}>Solicitação enviada!</h3>
+            <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.65, margin: "0 0 20px", fontSize: "0.875rem" }}>
+              A solicitação de reativação do <strong>{p.nome_imovel}</strong> foi enviada ao órgão ambiental do <strong>{p.uf}</strong>. Prazo de análise: até <strong>30 dias úteis</strong>.
+            </p>
+            <div style={{ background: "var(--color-secondary-01)", border: "1px solid var(--color-secondary-03)", borderRadius: 8, padding: "10px 14px", marginBottom: 20, textAlign: "left" }}>
+              <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--color-secondary-08)", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Protocolo</p>
+              <p style={{ margin: 0, fontFamily: "monospace", color: "var(--color-primary-default)", fontSize: "0.875rem" }}>{protocolo}</p>
+            </div>
+            <button type="button" className="br-button secondary" onClick={() => setScreen(0)} style={{ borderRadius: 8, width: "100%" }}>Reiniciar demonstração</button>
+          </div>
+        ),
+      },
+    ];
+  }
+
+  // scenario === "dados"
+  return [
+    screenDiagnostico(1),
+    {
+      icon: "fa-edit",
+      title: "Corrigir área",
+      content: (
+        <div>
+          <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
+            O sistema identificou divergência entre a área declarada e o polígono. Corrija os dados abaixo:
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+            <div>
+              <label style={{ fontWeight: 600, display: "block", marginBottom: 4, fontSize: "0.75rem", color: "var(--color-secondary-08)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Área declarada (ha)</label>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input type="number" defaultValue="124.8" style={{ flex: 1, padding: "8px 12px", border: "2px solid #b71c1c", borderRadius: 6, fontSize: "0.9rem", background: "#fce4ec" }} />
+                <span style={{ fontSize: "0.75rem", color: "#b71c1c", fontWeight: 600 }}>Divergente</span>
+              </div>
+            </div>
+            <div>
+              <label style={{ fontWeight: 600, display: "block", marginBottom: 4, fontSize: "0.75rem", color: "var(--color-secondary-08)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Área do polígono (ha) — calculada</label>
+              <input type="number" defaultValue="98.3" readOnly style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", border: "1px solid var(--color-secondary-04)", borderRadius: 6, fontSize: "0.9rem", background: "var(--color-secondary-01)", color: "var(--color-secondary-07)" }} />
+            </div>
+          </div>
+          <button type="button" className="br-button primary" onClick={() => setScreen(2)} style={{ borderRadius: 8, width: "100%" }}>
+            Usar área do polígono (98,3 ha)
+            <i className="fas fa-arrow-right ml-2" aria-hidden="true" />
+          </button>
+        </div>
+      ),
+    },
+    {
+      icon: "fa-map-marked-alt",
+      title: "Confirmar polígono",
+      content: (
+        <div>
+          <p style={{ color: "var(--color-secondary-07)", marginBottom: 14, lineHeight: 1.65, fontSize: "0.875rem" }}>
+            Polígono extraído do INCRA. Confirme que representa o imóvel corretamente:
+          </p>
+          <div style={{ height: 180, borderRadius: 10, background: "linear-gradient(135deg,#c8e6c9 0%,#a5d6a7 40%,#81c784 100%)", position: "relative", overflow: "hidden", marginBottom: 16, border: "2px solid var(--color-secondary-03)" }}>
+            <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+              <polygon points="50,20 230,15 245,140 180,170 40,155" fill="rgba(21,81,180,0.2)" stroke="#1351b4" strokeWidth="2" strokeDasharray="5,3" />
+            </svg>
+            <div style={{ position: "absolute", bottom: 6, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: 4, padding: "3px 8px", fontSize: 10, fontWeight: 700, color: "var(--color-secondary-08)" }}>
+              INCRA · 98,3 ha
+            </div>
+          </div>
+          <button type="button" className="br-button primary" onClick={() => setScreen(3)} style={{ borderRadius: 8, width: "100%", marginBottom: 8 }}>
+            <i className="fas fa-check mr-2" aria-hidden="true" />Confirmar polígono
+          </button>
+        </div>
+      ),
+    },
+    screenEnviado(() => setScreen(0)),
+  ];
+}
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

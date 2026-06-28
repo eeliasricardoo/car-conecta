@@ -30,6 +30,7 @@ function Index() {
       <Nav />
       <Hero />
       <Problem />
+      <Fear />
       <Insight />
       <HowItWorks />
       <Partners />
@@ -66,9 +67,26 @@ function Nav() {
               <a href="#problema" style={{ color: "var(--color-secondary-07)", fontWeight: 600, textDecoration: "none", fontSize: "14px", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primary-default)"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-secondary-07)"}>Problema</a>
               <a href="#funciona" style={{ color: "var(--color-secondary-07)", fontWeight: 600, textDecoration: "none", fontSize: "14px", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primary-default)"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-secondary-07)"}>Como funciona</a>
               <a href="#parceiros" style={{ color: "var(--color-secondary-07)", fontWeight: 600, textDecoration: "none", fontSize: "14px", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primary-default)"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-secondary-07)"}>Parceiros</a>
-              <a href="#piloto" style={{ color: "var(--color-secondary-07)", fontWeight: 600, textDecoration: "none", fontSize: "14px", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primary-default)"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-secondary-07)"}>Piloto</a>
+              <Link to="/resultados" style={{ color: "var(--color-secondary-07)", fontWeight: 600, textDecoration: "none", fontSize: "14px", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-primary-default)"} onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-secondary-07)"}>Resultados</Link>
             </nav>
-            <div>
+            <div className="d-flex" style={{ gap: 8 }}>
+              <Link to="/parceiro" style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "transparent",
+                color: "var(--color-primary-default)",
+                border: "1px solid var(--color-primary-default)",
+                borderRadius: 999,
+                padding: "0 16px",
+                height: 36,
+                fontWeight: 600,
+                fontSize: 13,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
+              }}>
+                <i className="fas fa-sign-in-alt" aria-hidden="true" style={{ fontSize: 12 }} />
+                <span className="d-none d-lg-inline">Portal parceiro</span>
+              </Link>
               <Link to="/piloto" style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 background: "var(--color-primary-default)",
@@ -83,7 +101,7 @@ function Nav() {
                 lineHeight: 1,
               }}>
                 <i className="fas fa-rocket" aria-hidden="true" style={{ fontSize: 13 }} />
-                <span className="nav-cta-text">Apresentar piloto</span>
+                <span className="nav-cta-text">Demo</span>
               </Link>
             </div>
           </div>
@@ -228,31 +246,135 @@ function Problem() {
   );
 }
 
+function Fear() {
+  return (
+    <section className="py-5" style={{ background: "#fff", borderTop: "1px solid var(--color-secondary-03)" }}>
+      <div className="container-lg">
+        <div className="row py-4 align-items-start">
+          <div className="col-md-4 mb-5 mb-md-0">
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fce4ec", color: "#b71c1c", borderRadius: 99, padding: "4px 14px", fontSize: "var(--font-size-scale-down-01)", fontWeight: 600, marginBottom: 16 }}>
+              <i className="fas fa-search" aria-hidden="true" />
+              O que investigamos
+            </span>
+            <h2 className="text-weight-bold" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", color: "var(--color-secondary-08)", lineHeight: 1.2, margin: "0 0 16px" }}>
+              O maior obstáculo não é técnico.{" "}
+              <span style={{ color: "#b71c1c" }}>É o medo.</span>
+            </h2>
+            <p style={{ color: "var(--color-secondary-07)", lineHeight: 1.75, margin: "0 0 16px" }}>
+              Investigamos por que produtores com CAR irregular não regularizam — mesmo quando o caminho parece simples. A barreira dominante não é burocracia nem custo: é o medo de que regularizar acione uma punição.
+            </p>
+            <div style={{ background: "var(--color-secondary-01)", border: "1px solid var(--color-secondary-03)", borderRadius: 8, padding: "12px 16px" }}>
+              <p style={{ margin: 0, color: "var(--color-secondary-08)", fontSize: "0.875rem", lineHeight: 1.7 }}>
+                <strong>Sendo honestos:</strong> esse medo é parcialmente real. Alguns produtores vão ter que arcar com custos de regularização. A solução não elimina isso — ela garante que o produtor{" "}
+                <strong>saiba com o que está lidando antes de agir</strong>, separando quem tem um problema simples de quem tem um passivo real.
+              </p>
+            </div>
+          </div>
+
+          <div className="col-md-8">
+            {/* Divisão: casos simples vs. casos com custo */}
+            <div className="row mb-4">
+              <div className="col-md-6 mb-4 mb-md-0">
+                <div className="br-card" style={{ borderTop: "4px solid var(--color-success-default, #168821)", height: "100%" }}>
+                  <div className="card-header" style={{ background: "var(--color-success-pastel, #e8f5e9)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <i className="fas fa-check-circle" style={{ color: "var(--color-success-default, #168821)", fontSize: 18 }} aria-hidden="true" />
+                      <strong style={{ color: "var(--color-success-default, #168821)" }}>Problema cadastral</strong>
+                    </div>
+                    <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "var(--color-secondary-07)" }}>Resolve sem custo, no celular</p>
+                  </div>
+                  <div className="card-content">
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                      {["CCIR vencido ou desatualizado", "Dados cadastrais incorretos (área, módulos)", "Documento de domínio com validade expirada", "Polígono desatualizado sem sobreposição"].map(item => (
+                        <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                          <i className="fas fa-circle" style={{ color: "var(--color-success-default, #168821)", fontSize: 5, marginTop: 7, flexShrink: 0 }} aria-hidden="true" />
+                          <span style={{ fontSize: "0.8rem", color: "var(--color-secondary-07)", lineHeight: 1.55 }}>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p style={{ margin: "12px 0 0", fontSize: "0.75rem", color: "var(--color-success-default, #168821)", fontWeight: 600 }}>
+                      → Este produtor recebe o fluxo de resolução digital
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-md-6">
+                <div className="br-card" style={{ borderTop: "4px solid #e65100", height: "100%" }}>
+                  <div className="card-header" style={{ background: "#fff8e1" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <i className="fas fa-exclamation-triangle" style={{ color: "#e65100", fontSize: 18 }} aria-hidden="true" />
+                      <strong style={{ color: "#e65100" }}>Passivo ambiental real</strong>
+                    </div>
+                    <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "var(--color-secondary-07)" }}>Pode envolver custo — mas o produtor precisa saber</p>
+                  </div>
+                  <div className="card-content">
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                      {["Sobreposição com APP ou Reserva Legal", "Desmatamento em área protegida", "CAR cancelado por inconsistência grave", "Área irregular que exige PRA"].map(item => (
+                        <li key={item} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                          <i className="fas fa-circle" style={{ color: "#e65100", fontSize: 5, marginTop: 7, flexShrink: 0 }} aria-hidden="true" />
+                          <span style={{ fontSize: "0.8rem", color: "var(--color-secondary-07)", lineHeight: 1.55 }}>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p style={{ margin: "12px 0 0", fontSize: "0.75rem", color: "#e65100", fontWeight: 600 }}>
+                      → Este produtor vai para o técnico da EMATER, informado
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Princípio */}
+            <div style={{ background: "var(--color-primary-pastel-01)", border: "1px solid var(--color-primary-lighten-02, #c5d4eb)", borderRadius: 8, padding: "14px 18px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <i className="fas fa-lightbulb" style={{ color: "var(--color-primary-default)", fontSize: 18, flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+              <p style={{ margin: 0, color: "var(--color-primary-darken-02)", fontSize: "0.875rem", lineHeight: 1.7 }}>
+                <strong>Princípio de design:</strong> o produtor nunca é notificado sem saber o que vem a seguir. Se o sistema detecta passivo ambiental, ele não tenta resolver sozinho — encaminha para o técnico com o diagnóstico já preparado. <strong>Informação com contexto não é punição.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Insight() {
   const points = [
+    {
+      n: "00",
+      icon: "fa-chalkboard-teacher",
+      t: "Educação via parceiro",
+      d: "Seu Raimundo não sabe o que é CAR. O banco ou cooperativa explica, em linguagem simples, por que o registro de terra importa para o crédito dele — via WhatsApp, SMS ou e-mail, com templates prontos do mídia kit.",
+      highlight: true,
+    },
     {
       n: "01",
       icon: "fa-brain",
       t: "Diagnóstico individual",
       d: "Um motor cruza SICAR, INCRA, MapBiomas e Receita para classificar cada imóvel: regular, pendente, sobreposição, dados desatualizados, cancelado.",
+      highlight: false,
     },
     {
       n: "02",
-      icon: "fa-plug",
-      t: "API credenciada",
-      d: "Bancos, cooperativas, tradings e EMATER consultam por CPF/CNPJ e recebem só o status e a ação recomendada. Sem dados sensíveis trafegando.",
+      icon: "fa-shield-alt",
+      t: "Proteção antes de notificar",
+      d: "O produtor só é notificado quando existe um caminho seguro de resolução. Casos com passivo ambiental nunca caem no automático — vão direto para o técnico da EMATER.",
+      highlight: false,
     },
     {
       n: "03",
       icon: "fa-bell",
       t: "Notificação no canal certo",
-      d: "O parceiro dispara a mensagem no canal que o produtor já usa — WhatsApp, app do banco, e-mail. Sem novo aplicativo, sem novo login.",
+      d: "A mensagem chega pelo canal que o produtor já usa e de quem ele já confia — não do governo. O parceiro usa os templates do mídia kit, adaptados para cada perfil.",
+      highlight: false,
     },
     {
       n: "04",
       icon: "fa-mobile-alt",
       t: "Resolução em 5 telas",
-      d: "Fluxo guiado mobile-first com OCR de documentos e confirmação de polígono pré-carregado. Casos complexos vão direto para a EMATER.",
+      d: "Fluxo guiado mobile-first com OCR de documentos e confirmação de polígono. Cada tipo de pendência tem um fluxo diferente. Sem jargão técnico.",
+      highlight: false,
     },
   ];
 
@@ -265,19 +387,28 @@ function Insight() {
             className="mt-3 text-weight-bold"
             style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", color: "var(--color-secondary-08)", maxWidth: 680, lineHeight: 1.2 }}
           >
-            Uma camada de inteligência sobre o SICAR. Não uma base paralela.
+            Começa pela educação. Termina na regularização.
           </h2>
+          <p className="mt-3" style={{ color: "var(--color-secondary-07)", maxWidth: 580, lineHeight: 1.75 }}>
+            Seu Raimundo não sabe o que é SICAR, não sabe que tem pendência e não sabe que isso trava o crédito. A solução começa antes do diagnóstico — começa em explicar, em linguagem simples, o que está em jogo.
+          </p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "var(--spacing-scale-3x)", alignItems: "start", marginTop: "var(--spacing-scale-3x)" }}>
           {points.map((p) => (
             <div key={p.n}>
-              <div className="br-card">
+              <div className="br-card" style={p.highlight ? { border: "2px solid var(--color-primary-default)", boxShadow: "0 0 0 4px var(--color-primary-pastel-01)" } : {}}>
+                {p.highlight && (
+                  <div style={{ background: "var(--color-primary-default)", padding: "4px 16px", display: "flex", alignItems: "center", gap: 6 }}>
+                    <i className="fas fa-star" style={{ color: "#fff", fontSize: 10 }} aria-hidden="true" />
+                    <span style={{ color: "#fff", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Ponto de partida</span>
+                  </div>
+                )}
                 <div className="card-header">
                   <div className="d-flex align-items-center" style={{ gap: "var(--spacing-scale-2x)" }}>
                     <div style={{
                       width: 48, height: 48, borderRadius: "50%",
-                      background: "var(--color-primary-pastel-01)",
+                      background: p.highlight ? "var(--color-primary-default)" : "var(--color-primary-pastel-01)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       flexShrink: 0,
                     }}>
@@ -303,13 +434,13 @@ function Insight() {
 
 function HowItWorks() {
   const steps = [
-    { k: "SICAR", icon: "fa-database", v: "Base oficial existente, com 7M+ cadastros." },
-    { k: "Motor de diagnóstico", icon: "fa-cogs", v: "Classifica situação por imóvel e gera ação recomendada em linguagem simples." },
-    { k: "API de diagnóstico", icon: "fa-code", v: "REST pública, credenciada via convênio com o MMA. Retorna status + ação por CPF/CNPJ." },
-    { k: "Parceiros", icon: "fa-handshake", v: "Bancos, cooperativas, tradings, EMATER, secretarias estaduais." },
-    { k: "Canal do produtor", icon: "fa-comments", v: "WhatsApp, app do banco, e-mail — nenhum app novo para instalar." },
-    { k: "Fluxo de resolução", icon: "fa-tasks", v: "5 telas, OCR de documento, confirmação de polígono." },
-    { k: "Retorno ao SICAR", icon: "fa-check-circle", v: "Dados corrigidos voltam direto via módulo oficial de retificação." },
+    { k: "Mídia kit para parceiros", icon: "fa-chalkboard-teacher", v: "Templates prontos em linguagem simples para o parceiro educar Seu Raimundo via WhatsApp, SMS e e-mail — sem precisar criar nada do zero." },
+    { k: "SICAR + bases cruzadas", icon: "fa-database", v: "Motor cruza SICAR, INCRA, MapBiomas e Receita. 7M+ cadastros classificados por situação." },
+    { k: "Motor de diagnóstico", icon: "fa-cogs", v: "Classifica por imóvel: regular, pendente, sobreposição, dados incorretos, cancelado. Gera ação recomendada em linguagem simples." },
+    { k: "Portal do parceiro", icon: "fa-sign-in-alt", v: "Banco ou cooperativa consulta por CPF e vê o diagnóstico na hora. Nenhuma integração técnica necessária." },
+    { k: "Notificação no canal certo", icon: "fa-comments", v: "Mensagem chega pelo WhatsApp, app do banco ou e-mail — de quem o produtor já confia, não do governo." },
+    { k: "Fluxo de resolução", icon: "fa-tasks", v: "4 cenários diferentes: documento, sobreposição, cancelado, dados incorretos. OCR, mapa, formulário — tudo no celular." },
+    { k: "Retorno ao SICAR", icon: "fa-check-circle", v: "Dados corrigidos enviados via módulo oficial de retificação. Confirmação em até 48 horas." },
   ];
 
   return (
@@ -381,14 +512,14 @@ function Partners() {
       icon: "fa-industry",
       t: "Tradings e frigoríficos",
       ex: "Cargill · JBS · Marfrig · SLC",
-      why: "Compromissos ESG e rastreabilidade exigem CAR regular do fornecedor. Já constroem isso internamente — a API entrega pronto.",
+      why: "Compromissos ESG e rastreabilidade exigem CAR regular do fornecedor. Já constroem isso internamente — o portal entrega pronto.",
     },
     {
       tag: "Extensão rural",
       icon: "fa-tractor",
       t: "EMATER e estados",
       ex: "EMATER · secretarias estaduais",
-      why: "Já visitam o produtor e já são o elo de confiança no campo. A API entrega uma lista de quem precisa de ajuda antes da visita.",
+      why: "Já visitam o produtor e já são o elo de confiança no campo. O portal entrega uma lista de quem precisa de ajuda antes da visita.",
     },
     {
       tag: "Backlog",
@@ -494,24 +625,36 @@ function Flow() {
 function Objections() {
   const qa = [
     {
+      q: "O produtor não vai querer — ele tem medo de que o CAR vire um 'mapa do crime'.",
+      a: "É a objeção mais real. Por isso o fluxo só aciona o produtor quando há uma ação simples e segura disponível — documento desatualizado, dado incorreto. Casos com passivo ambiental ou sobreposição não caem no automático: vão para o técnico da EMATER, que já recebe o diagnóstico preparado. O produtor nunca é notificado sem que haja um caminho claro de resolução à frente.",
+    },
+    {
+      q: "Agricultura familiar não tem estrutura para usar isso.",
+      a: "Para agricultura familiar o canal é a EMATER e as cooperativas de crédito (Sicoob, Sicredi, Cresol), que já visitam esses produtores e têm interesse direto — o crédito rural só sai com CAR regular. O fluxo mobile-first foi desenhado para funcionar com baixa alfabetização digital: uma ação por tela, sem jargão técnico, com suporte da cooperativa na primeira vez.",
+    },
+    {
+      q: "Médios e grandes produtores já têm estrutura — não precisam disso.",
+      a: "Eles precisam, mas por outra razão: rastreabilidade ESG. Tradings como Cargill e JBS já exigem CAR regular de 100% dos fornecedores. O portal entrega essa verificação contínua e automatizada no lugar de auditorias manuais anuais — é argumento de eficiência, não de conformidade.",
+    },
+    {
+      q: "O produtor na fronteira agrícola desconfia do Estado — como chega até ele?",
+      a: "Não chega direto. O canal é o intermediário de confiança: o banco que libera o crédito, a trading que compra a soja, a cooperativa que financia o plantio. Esses atores já têm acesso e credibilidade. O governo provê o diagnóstico; o parceiro provê o relacionamento.",
+    },
+    {
+      q: "Sobreposições e erros de sistema existem — o produtor vai culpar a ferramenta.",
+      a: "Justamente por isso o fluxo não esconde o problema: mostra o conflito no mapa, explica o que gerou a sobreposição e encaminha para o técnico. O objetivo não é resolver tudo digitalmente — é eliminar os casos simples da fila de análise dos estados, que hoje está represada.",
+    },
+    {
+      q: "E o PRA? Regularizar o CAR pode gerar custo de recomposição.",
+      a: "CAR e PRA são instrumentos separados. A notificação deixa isso claro: o CAR resolve a pendência cadastral; a adesão ao PRA é uma etapa distinta, com prazos e negociação próprios. O fluxo não promete resolver passivo ambiental — resolve irregularidade cadastral, que é o que trava o crédito hoje.",
+    },
+    {
       q: "Por que isso não foi feito antes?",
-      a: "Porque o SICAR foi construído para receber dados, não para distribuir diagnósticos. A mudança não é técnica — é de mentalidade. E é exatamente para isso que servem hackathons de inovação aberta.",
-    },
-    {
-      q: "Passar dados do produtor para banco ou trading não é problemático?",
-      a: "A API não passa dados do produtor para o parceiro. O parceiro já tem o CPF do cliente — consulta a API e recebe só o status do CAR e a ação. É o mesmo modelo de consulta ao Serasa.",
-    },
-    {
-      q: "E quem não tem banco ou cooperativa?",
-      a: "Para esses, o canal é a EMATER e as prefeituras municipais. Para quem nem isso tem, o SMS direto do governo via base da Receita — já existe precedente com Auxílio Brasil e Pix do INSS.",
+      a: "O SICAR foi construído para receber dados, não para distribuir diagnósticos. Não existe API pública de consulta por CPF — requer autenticação Gov.br. A mudança não é técnica, é de governança: conectar quem tem os dados (SICAR) com quem tem o canal (banco, cooperativa). Hackathons de inovação aberta existem exatamente para isso.",
     },
     {
       q: "Isso escala para 7 milhões de cadastros?",
-      a: "Sim, porque a carga é distribuída. Cada parceiro absorve o volume do próprio relacionamento. O banco dispara para correntistas, a cooperativa para associados, a trading para fornecedores.",
-    },
-    {
-      q: "Como garantir que o produtor não comete erros no fluxo?",
-      a: "O fluxo só apresenta ações que o sistema já sabe que são seguras para aquele caso. Casos com risco (sobreposição, redesenho de polígono) nunca caem no automático — vão direto para o técnico.",
+      a: "Sim, porque a carga é distribuída. O banco dispara para seus correntistas rurais, a cooperativa para os associados, a trading para os fornecedores. O governo não precisa construir canal próprio para cada um dos 7 milhões — cada parceiro absorve o volume do próprio relacionamento.",
     },
   ];
 
@@ -586,13 +729,16 @@ function Pilot() {
                 </div>
               ))}
             </div>
-            <a
-              href="mailto:contato@carproativo.gov.br"
-              className="br-button primary large block"
-            >
-              <i className="fas fa-envelope mr-2" aria-hidden="true" />
-              Conversar sobre o piloto
-            </a>
+            <div className="d-flex flex-column" style={{ gap: 12 }}>
+              <Link to="/resultados" className="br-button primary large">
+                <i className="fas fa-chart-bar mr-2" aria-hidden="true" />
+                Ver resultados do piloto
+              </Link>
+              <Link to="/parceiro" className="br-button secondary large">
+                <i className="fas fa-sign-in-alt mr-2" aria-hidden="true" />
+                Acessar portal do parceiro
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -632,7 +778,9 @@ function SiteFooter() {
             </a>
             <div className="br-list">
               <span className="br-divider d-md-none" />
-              <a className="br-item" href="#piloto"><div className="content">Mato Grosso</div></a>
+              <Link className="br-item" to="/piloto"><div className="content">Demonstração</div></Link>
+              <Link className="br-item" to="/resultados"><div className="content">Resultados</div></Link>
+              <Link className="br-item" to="/parceiro"><div className="content">Portal do parceiro</div></Link>
               <a className="br-item" href="mailto:contato@carproativo.gov.br"><div className="content">Fale conosco</div></a>
               <span className="br-divider d-md-none" />
             </div>

@@ -9,12 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResultadosRouteImport } from './routes/resultados'
 import { Route as PilotoRouteImport } from './routes/piloto'
+import { Route as ParceiroRouteImport } from './routes/parceiro'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ResultadosRoute = ResultadosRouteImport.update({
+  id: '/resultados',
+  path: '/resultados',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PilotoRoute = PilotoRouteImport.update({
   id: '/piloto',
   path: '/piloto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParceiroRoute = ParceiroRouteImport.update({
+  id: '/parceiro',
+  path: '/parceiro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +37,59 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/parceiro': typeof ParceiroRoute
   '/piloto': typeof PilotoRoute
+  '/resultados': typeof ResultadosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/parceiro': typeof ParceiroRoute
   '/piloto': typeof PilotoRoute
+  '/resultados': typeof ResultadosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/parceiro': typeof ParceiroRoute
   '/piloto': typeof PilotoRoute
+  '/resultados': typeof ResultadosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/piloto'
+  fullPaths: '/' | '/parceiro' | '/piloto' | '/resultados'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/piloto'
-  id: '__root__' | '/' | '/piloto'
+  to: '/' | '/parceiro' | '/piloto' | '/resultados'
+  id: '__root__' | '/' | '/parceiro' | '/piloto' | '/resultados'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ParceiroRoute: typeof ParceiroRoute
   PilotoRoute: typeof PilotoRoute
+  ResultadosRoute: typeof ResultadosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/resultados': {
+      id: '/resultados'
+      path: '/resultados'
+      fullPath: '/resultados'
+      preLoaderRoute: typeof ResultadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/piloto': {
       id: '/piloto'
       path: '/piloto'
       fullPath: '/piloto'
       preLoaderRoute: typeof PilotoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parceiro': {
+      id: '/parceiro'
+      path: '/parceiro'
+      fullPath: '/parceiro'
+      preLoaderRoute: typeof ParceiroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +104,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ParceiroRoute: ParceiroRoute,
   PilotoRoute: PilotoRoute,
+  ResultadosRoute: ResultadosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

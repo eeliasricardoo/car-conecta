@@ -83,6 +83,42 @@ const DEMO_RECORDS: Record<string, SicarRecord> = {
     codigos_sncr: ["2420200634280", "2480450028362", "9500339031245", "9500339031326", "9501737335390"],
     dado_real: false,
   },
+  // CPF 3 — CAR cancelado
+  "32165498700": {
+    codigo_car: "PA-1501402-C3D7E1F4A2B8",
+    status: "cancelado",
+    nome_imovel: "Sítio Paraíso Verde",
+    area_ha: 32.1,
+    codigo_ibge_municipio: "1501402",
+    nome_municipio: "Belém",
+    uf: "PA",
+    data_inscricao: "2016-09-10",
+    data_ultima_atualizacao: "2021-04-22",
+    pendencias: [
+      "CAR cancelado por inconsistência nos dados de domínio",
+      "Ausência de documentação comprobatória na análise de 2021",
+    ],
+    codigos_sncr: [],
+    dado_real: false,
+  },
+  // CPF 4 — dados cadastrais incorretos
+  "55566677789": {
+    codigo_car: "GO-5208707-A1B3C5D7E9F2",
+    status: "pendente",
+    nome_imovel: "Fazenda Boa Colheita",
+    area_ha: 124.8,
+    codigo_ibge_municipio: "5208707",
+    nome_municipio: "Goiânia",
+    uf: "GO",
+    data_inscricao: "2020-03-15",
+    data_ultima_atualizacao: "2023-01-10",
+    pendencias: [
+      "Área declarada (124,8 ha) diverge do polígono registrado (98,3 ha)",
+      "Módulos fiscais não atualizados conforme IN INCRA 82/2015",
+    ],
+    codigos_sncr: ["3120530021451"],
+    dado_real: false,
+  },
   // CPF extra para demo — status regular
   "11122233396": {
     codigo_car: "MT-5107602-D5F1A7C8B2E3",
