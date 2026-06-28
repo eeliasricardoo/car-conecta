@@ -42,6 +42,50 @@ const INSTITUTIONS = [
   "Cargill Grãos",
 ];
 
+const FARMER_ACTIONS: Array<{
+  panel: Exclude<FarmerPanel, null>;
+  title: string;
+  description: string;
+  icon: string;
+  emphasis: "primary" | "wide" | "default";
+}> = [
+  {
+    panel: "cpf",
+    title: "CPF exige login Gov.br",
+    description: "Consulta pessoal com autenticação ou contexto autorizado.",
+    icon: "fa-id-card",
+    emphasis: "wide",
+  },
+  {
+    panel: "localizacao",
+    title: "Envie sua localização",
+    description: "Cruza coordenadas com município, IBGE e dados públicos da região.",
+    icon: "fa-location-arrow",
+    emphasis: "primary",
+  },
+  {
+    panel: "car",
+    title: "Número do CAR",
+    description: "Busca demonstrativa por código do imóvel rural.",
+    icon: "fa-hashtag",
+    emphasis: "default",
+  },
+  {
+    panel: "mapa",
+    title: "Encontre no mapa",
+    description: "Visualiza a região de atendimento e sinais territoriais.",
+    icon: "fa-map",
+    emphasis: "wide",
+  },
+  {
+    panel: "novo",
+    title: "Não tenho CAR",
+    description: "Orienta o caminho oficial para inscrição ou regularização.",
+    icon: "fa-file-signature",
+    emphasis: "default",
+  },
+];
+
 function AssistentePage() {
   const [profile, setProfile] = useState<Profile>(null);
 
@@ -49,9 +93,8 @@ function AssistentePage() {
     <div
       style={{
         minHeight: "100vh",
-        background:
-          "radial-gradient(circle at 18% 8%, rgba(52,199,89,0.12), transparent 28%), linear-gradient(180deg, #f8faf7 0%, #eef5f1 100%)",
-        color: "#1f2937",
+        background: "var(--color-secondary-01, #f8f8f8)",
+        color: "var(--color-secondary-09, #1f2937)",
       }}
     >
       <GovHeader onHome={() => setProfile(null)} />
@@ -65,14 +108,13 @@ function AssistentePage() {
 function GovHeader({ onHome }: { onHome: () => void }) {
   return (
     <header
+      className="br-header"
       style={{
-        minHeight: 76,
-        background: "rgba(255,255,255,0.92)",
-        borderBottom: "1px solid rgba(15,23,42,0.08)",
-        boxShadow: "0 10px 30px rgba(15,23,42,0.04)",
-        display: "flex",
-        alignItems: "center",
-        backdropFilter: "blur(14px)",
+        background: "#fff",
+        borderBottom: "1px solid var(--color-secondary-03)",
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
       }}
     >
       <div className="container-lg">
@@ -93,20 +135,28 @@ function GovHeader({ onHome }: { onHome: () => void }) {
               display: "inline-flex",
               alignItems: "center",
               gap: 12,
-              color: "#111827",
-              fontWeight: 800,
-              fontSize: 18,
+              color: "var(--color-secondary-09)",
+              fontWeight: 700,
+              fontSize: 16,
               padding: 0,
             }}
           >
             <img src={govBrLogo} alt="Gov.br" style={{ height: 30 }} />
+            <span
+              className="br-divider vertical mx-1"
+              style={{ height: 24, borderLeft: "1px solid var(--color-secondary-03)" }}
+            />
             <span style={{ color: "#168821" }}>CAR Proativo</span>
           </button>
           <nav style={{ display: "flex", gap: 8 }}>
-            <Link to="/demo" style={navPillStyle}>
+            <Link to="/demo" className="br-button secondary small" style={{ borderRadius: 999 }}>
               Demo chatbot
             </Link>
-            <Link to="/localizacao" style={navPillStyle}>
+            <Link
+              to="/localizacao"
+              className="br-button primary small"
+              style={{ borderRadius: 999 }}
+            >
               API localização
             </Link>
           </nav>
@@ -237,48 +287,46 @@ function ProfileCard({
 
 function FarmerHub() {
   const [panel, setPanel] = useState<FarmerPanel>(null);
+  const activeAction = FARMER_ACTIONS.find((action) => action.panel === panel);
 
   return (
-    <main className="container-lg" style={{ padding: "42px 16px 96px" }}>
-      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <section style={{ ...heroCardStyle, marginBottom: 24 }}>
-          <span style={eyebrowStyle}>Experiência do agricultor</span>
+    <main style={{ padding: "40px 0 80px" }}>
+      <div className="container-lg">
+        <section className="br-card" style={{ borderRadius: 8, marginBottom: 24 }}>
+          <span className="br-tag success" style={{ fontWeight: 700 }}>
+            Experiência do agricultor
+          </span>
           <h1
-            style={{ margin: "10px 0 8px", fontSize: "clamp(30px, 4vw, 48px)", color: "#0f172a" }}
+            style={{
+              margin: "16px 0 8px",
+              fontSize: "var(--font-size-scale-up-06, 2.5rem)",
+              lineHeight: 1.12,
+              color: "var(--color-secondary-09)",
+              maxWidth: 820,
+            }}
           >
             Conferir CAR e avançar para crédito rural sem perder contexto.
           </h1>
-          <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
+          <p style={{ ...mutedTextStyle, maxWidth: 760 }}>
             O produtor escolhe uma necessidade e recebe um caminho guiado. CPF fica sinalizado como
             fluxo com autenticação Gov.br; localização, mapa e número do CAR simulam consultas
             públicas.
           </p>
         </section>
-        <div style={surfaceStyle}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-              gap: 16,
-            }}
-          >
-            <HubButton
-              title="CPF Exige Login GOV.BR"
-              icon="fa-id-card"
-              onClick={() => setPanel("cpf")}
-            />
-            <HubButton
-              title="Envie sua localização"
-              icon="fa-location-arrow"
-              onClick={() => setPanel("localizacao")}
-            />
-            <HubButton title="Número do CAR" icon="fa-hashtag" onClick={() => setPanel("car")} />
-            <HubButton title="Encontre no Mapa" icon="fa-map" onClick={() => setPanel("mapa")} />
-            <HubButton
-              title="Não Tenho CAR"
-              icon="fa-file-signature"
-              onClick={() => setPanel("novo")}
-            />
+
+        <div className="br-card" style={{ borderRadius: 8 }}>
+          <div className="assistente-bento">
+            {FARMER_ACTIONS.map((action) => (
+              <HubButton
+                key={action.panel}
+                title={action.title}
+                description={action.description}
+                icon={action.icon}
+                emphasis={action.emphasis}
+                active={panel === action.panel}
+                onClick={() => setPanel(action.panel)}
+              />
+            ))}
           </div>
           <div style={{ marginTop: 28 }}>
             {!panel && <EmptyFarmerState />}
@@ -288,40 +336,90 @@ function FarmerHub() {
             {panel === "mapa" && <MapPanel audience="agricultor" />}
             {panel === "novo" && <NewCarPanel />}
           </div>
+          {activeAction && (
+            <p style={{ ...mutedTextStyle, marginTop: 16, fontSize: 13 }}>
+              Selecionado: <strong>{activeAction.title}</strong>
+            </p>
+          )}
         </div>
       </div>
     </main>
   );
 }
 
-function HubButton({ title, icon, onClick }: { title: string; icon: string; onClick: () => void }) {
+function HubButton({
+  title,
+  description,
+  icon,
+  emphasis,
+  active,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+  emphasis: "primary" | "wide" | "default";
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
+      className={`br-card assistente-bento-card assistente-bento-card--${emphasis} ${
+        active ? "selected" : ""
+      }`}
       onClick={onClick}
       style={{
-        border: "1px solid rgba(15,23,42,0.08)",
-        borderRadius: 16,
-        background: "#fff",
-        minHeight: 128,
-        padding: 18,
+        minHeight: emphasis === "primary" ? 178 : 148,
+        borderRadius: 8,
+        border: active
+          ? "2px solid var(--color-primary-default)"
+          : "1px solid var(--color-secondary-04)",
+        borderLeft:
+          emphasis === "primary"
+            ? "6px solid var(--color-success-default, #168821)"
+            : "1px solid var(--color-secondary-04)",
+        background:
+          emphasis === "primary"
+            ? "linear-gradient(135deg, var(--color-primary-pastel-01, #dbe8fb), #fff)"
+            : "#fff",
+        padding: "20px 18px",
+        textAlign: "left",
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-start",
         justifyContent: "space-between",
-        gap: 10,
-        color: "#1f2937",
-        fontWeight: 800,
-        fontSize: 18,
-        lineHeight: 1.2,
-        boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
+        gap: 14,
+        color: "var(--color-secondary-09)",
+        boxShadow: active
+          ? "0 0 0 4px var(--color-primary-pastel-01)"
+          : "0 8px 18px rgba(0,0,0,0.06)",
         cursor: "pointer",
       }}
     >
-      <span style={miniIconStyle}>
+      <span
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          background: "var(--color-primary-pastel-01)",
+          color: "var(--color-primary-default)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <i className={`fas ${icon}`} aria-hidden="true" />
       </span>
-      {title}
+      <span>
+        <strong style={{ display: "block", fontSize: 18, lineHeight: 1.25 }}>{title}</strong>
+        <span style={{ display: "block", color: "var(--color-secondary-07)", marginTop: 8 }}>
+          {description}
+        </span>
+      </span>
+      <span className={`br-button ${active ? "primary" : "secondary"} small`} aria-hidden="true">
+        Acessar
+      </span>
     </button>
   );
 }

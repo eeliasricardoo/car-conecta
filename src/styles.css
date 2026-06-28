@@ -122,7 +122,9 @@ html {
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
-.flow-scroll::-webkit-scrollbar { height: 4px; }
+.flow-scroll::-webkit-scrollbar {
+  height: 4px;
+}
 .flow-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 99px;
@@ -172,9 +174,31 @@ html {
   margin-top: 4px;
 }
 
+.assistente-bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(148px, auto);
+  gap: var(--spacing-scale-2x);
+  align-items: stretch;
+}
+
+.assistente-bento-card {
+  width: 100%;
+}
+
+.assistente-bento-card--primary,
+.assistente-bento-card--wide {
+  grid-column: span 2;
+}
+
 @media (max-width: 767px) {
-  .section-hero { padding-top: 40px; padding-bottom: 36px; }
-  .flow-card { width: 236px; }
+  .section-hero {
+    padding-top: 40px;
+    padding-bottom: 36px;
+  }
+  .flow-card {
+    width: 236px;
+  }
 
   /* Nav: reduz padding do container no header */
   .br-header .container-lg {
@@ -183,8 +207,14 @@ html {
   }
 
   /* Seções: menos padding vertical no mobile */
-  .py-5 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
-  .py-4 { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+  .py-5 {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+  .py-4 {
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+  }
 
   /* Hero / CTA: botões side-by-side viram full-width em mobile */
   .cta-buttons .br-button {
@@ -220,6 +250,15 @@ html {
     width: 100%;
   }
 
+  .assistente-bento {
+    grid-template-columns: 1fr;
+  }
+
+  .assistente-bento-card--primary,
+  .assistente-bento-card--wide {
+    grid-column: span 1;
+  }
+
   /* Tab pills: distribuição uniforme */
   .tab-pill {
     flex: 1 1 auto;
@@ -233,9 +272,16 @@ html {
     align-items: flex-start !important;
     gap: 10px !important;
   }
-  .step-row-num  { flex: 0 0 auto; }
-  .step-row-icon { flex: 0 0 auto; }
-  .step-row-info { flex: 1 1 auto; min-width: 0; }
+  .step-row-num {
+    flex: 0 0 auto;
+  }
+  .step-row-icon {
+    flex: 0 0 auto;
+  }
+  .step-row-info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 
   /* DiagnosticResult: código CAR não estoura */
   .car-code-block {
@@ -266,6 +312,12 @@ html {
   }
 }
 
+@media (min-width: 768px) and (max-width: 991px) {
+  .assistente-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 480px) {
   /* Tab strip na piloto: diminui fonte dos botões */
   .tab-pill {
@@ -279,8 +331,12 @@ html {
   }
 
   /* Nav: esconde texto do botão CTA, mantém só ícone */
-  .nav-cta-text { display: none; }
+  .nav-cta-text {
+    display: none;
+  }
 
   /* Hero: stat labels menores */
-  .hero-stat-num { font-size: var(--font-size-scale-up-03); }
+  .hero-stat-num {
+    font-size: var(--font-size-scale-up-03);
+  }
 }
