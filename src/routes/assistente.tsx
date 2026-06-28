@@ -289,9 +289,9 @@ function FarmerHub() {
   const [panel, setPanel] = useState<FarmerPanel>(null);
 
   return (
-    <main style={{ padding: "48px 0 80px", background: "var(--color-secondary-01)" }}>
+    <main style={{ padding: "56px 0 88px", background: "var(--color-secondary-01)" }}>
       <div className="container-lg">
-        <section style={{ maxWidth: 900, marginBottom: 32 }}>
+        <section style={{ maxWidth: 900, marginBottom: 36 }}>
           <span className="br-tag success" style={{ fontWeight: 700, marginBottom: 12 }}>
             Experiência do agricultor
           </span>
@@ -312,19 +312,18 @@ function FarmerHub() {
           </p>
         </section>
 
-        <section className="br-card" style={{ borderRadius: 8, marginBottom: 24 }}>
-          <div className="row">
+        <section style={{ marginBottom: 32 }}>
+          <div style={actionGridStyle}>
             {FARMER_ACTIONS.map((action) => (
-              <div key={action.panel} className="col-lg-4 col-md-6 mb-4">
-                <HubActionCard
-                  title={action.title}
-                  description={action.description}
-                  icon={action.icon}
-                  variant={action.variant}
-                  active={panel === action.panel}
-                  onClick={() => setPanel(action.panel)}
-                />
-              </div>
+              <HubActionCard
+                key={action.panel}
+                title={action.title}
+                description={action.description}
+                icon={action.icon}
+                variant={action.variant}
+                active={panel === action.panel}
+                onClick={() => setPanel(action.panel)}
+              />
             ))}
           </div>
         </section>
@@ -364,12 +363,19 @@ function HubActionCard({
       className="br-card"
       style={{
         height: "100%",
-        minHeight: 210,
+        minHeight: 224,
         borderRadius: 8,
-        border: active ? "2px solid var(--color-primary-default)" : undefined,
+        border: active
+          ? "2px solid var(--color-primary-default)"
+          : "1px solid var(--color-secondary-04)",
+        borderTop:
+          variant === "primary"
+            ? "4px solid var(--color-success-default, #168821)"
+            : "1px solid var(--color-secondary-04)",
         boxShadow: active ? "0 0 0 4px var(--color-primary-pastel-01)" : undefined,
         display: "flex",
         flexDirection: "column",
+        padding: 24,
       }}
     >
       <div style={{ flex: 1 }}>
@@ -409,13 +415,15 @@ function HubActionCard({
 
 function EmptyFarmerState() {
   return (
-    <div className="br-message info" role="status" style={{ marginBottom: 0 }}>
+    <div className="br-message info" role="status" style={{ marginBottom: 0, maxWidth: 920 }}>
       <div className="icon">
         <i className="fas fa-info-circle" aria-hidden="true" />
       </div>
       <div className="content">
-        <span className="message-title">Escolha uma solução acima.</span>
-        <span className="message-body">
+        <span className="message-title" style={{ display: "block", marginBottom: 4 }}>
+          Escolha uma solução acima.
+        </span>
+        <span className="message-body" style={{ display: "block" }}>
           O hub mostra quais consultas exigem autenticação Gov.br e quais usam dados públicos
           regionais.
         </span>
@@ -867,6 +875,13 @@ const eyebrowStyle = {
   padding: "7px 12px",
   fontWeight: 900,
   fontSize: 13,
+} as const;
+
+const actionGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
+  gap: 24,
+  alignItems: "stretch",
 } as const;
 
 const heroCardStyle = {
