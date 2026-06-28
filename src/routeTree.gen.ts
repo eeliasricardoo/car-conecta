@@ -15,6 +15,7 @@ import { Route as PilotoRouteImport } from './routes/piloto'
 import { Route as ParceiroRouteImport } from './routes/parceiro'
 import { Route as LocalizacaoRouteImport } from './routes/localizacao'
 import { Route as DemoRouteImport } from './routes/demo'
+import { Route as AssistenteRouteImport } from './routes/assistente'
 import { Route as IndexRouteImport } from './routes/index'
 
 const WikiRoute = WikiRouteImport.update({
@@ -47,6 +48,11 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssistenteRoute = AssistenteRouteImport.update({
+  id: '/assistente',
+  path: '/assistente',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
   '/demo': typeof DemoRoute
   '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
   '/demo': typeof DemoRoute
   '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
   '/demo': typeof DemoRoute
   '/localizacao': typeof LocalizacaoRoute
   '/parceiro': typeof ParceiroRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/assistente'
     | '/demo'
     | '/localizacao'
     | '/parceiro'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/assistente'
     | '/demo'
     | '/localizacao'
     | '/parceiro'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/assistente'
     | '/demo'
     | '/localizacao'
     | '/parceiro'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AssistenteRoute: typeof AssistenteRoute
   DemoRoute: typeof DemoRoute
   LocalizacaoRoute: typeof LocalizacaoRoute
   ParceiroRoute: typeof ParceiroRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/assistente': {
+      id: '/assistente'
+      path: '/assistente'
+      fullPath: '/assistente'
+      preLoaderRoute: typeof AssistenteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AssistenteRoute: AssistenteRoute,
   DemoRoute: DemoRoute,
   LocalizacaoRoute: LocalizacaoRoute,
   ParceiroRoute: ParceiroRoute,
