@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import govBrLogo from "@/assets/govbr-logo.svg";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
@@ -21,6 +21,11 @@ export const Route = createFileRoute("/assistente")({
 
 type Profile = "agricultor" | "parceiro" | null;
 type FarmerPanel = "cpf" | "localizacao" | "car" | "mapa" | "novo" | null;
+type DoubtMessage = {
+  id: string;
+  from: "bot" | "user";
+  text: string;
+};
 
 type LocationResult = {
   ok: boolean;
@@ -50,18 +55,18 @@ const FARMER_ACTIONS: Array<{
   variant: "primary" | "secondary";
 }> = [
   {
-    panel: "cpf",
-    title: "CPF exige login Gov.br",
-    description: "Consulta pessoal com autenticação ou contexto autorizado.",
-    icon: "fa-id-card",
-    variant: "secondary",
-  },
-  {
     panel: "localizacao",
     title: "Envie sua localização",
     description: "Cruza coordenadas com município, IBGE e dados públicos da região.",
     icon: "fa-location-arrow",
     variant: "primary",
+  },
+  {
+    panel: "cpf",
+    title: "Consulta por CPF",
+    description: "Exige login Gov.br ou contexto autorizado para dados pessoais.",
+    icon: "fa-id-card",
+    variant: "secondary",
   },
   {
     panel: "car",
@@ -86,6 +91,13 @@ const FARMER_ACTIONS: Array<{
   },
 ];
 
+const QUICK_DOUBTS = [
+  "O que é o CAR?",
+  "CPF exige login?",
+  "Posso usar localização?",
+  "Serve para WhatsApp?",
+];
+
 function AssistentePage() {
   const [profile, setProfile] = useState<Profile>(null);
 
@@ -101,6 +113,7 @@ function AssistentePage() {
       {!profile && <ProfileChooser onChoose={setProfile} />}
       {profile === "agricultor" && <FarmerHub />}
       {profile === "parceiro" && <PartnerFlow />}
+      <DoubtChat />
     </div>
   );
 }
@@ -148,22 +161,127 @@ function GovHeader({ onHome }: { onHome: () => void }) {
             />
             <span style={{ color: "#168821" }}>CAR Proativo</span>
           </button>
-          <nav style={{ display: "flex", gap: 8 }}>
-            <Link to="/demo" className="br-button secondary small" style={{ borderRadius: 999 }}>
-              Demo chatbot
-            </Link>
-            <Link
-              to="/localizacao"
-              className="br-button primary small"
-              style={{ borderRadius: 999 }}
-            >
-              API localização
-            </Link>
-          </nav>
         </div>
       </div>
     </header>
   );
+}
+
+function DoubtChat() {
+  const [open, setOpen] = useState(true);
+  const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState<DoubtMessage[]>([
+    {
+      id: "welcome",
+      from: "bot",
+      text: "Olá. Posso tirar dúvidas sobre CAR, Gov.br, CPF, localização, SICAR e uso em WhatsApp ou widget.",
+    },
+  ]);
+
+  function ask(question: string) {
+    const answer = answerDoubt(question);
+    setMessages((current) => [
+      ...current,
+      { id: crypto.randomUUID(), from: "user", text: question },
+      { id: crypto.randomUUID(), from: "bot", text: answer },
+    ]);
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const question = draft.trim();
+    if (!question) return;
+    setDraft("");
+    ask(question);
+  }
+
+  return (
+    <aside className={`assistente-chat ${open ? "is-open" : "is-closed"}`}>
+      <button
+        type="button"
+        className="br-button primary circle assistente-chat-toggle"
+        onClick={() => setOpen((value) => !value)}
+        aria-label={open ? "Fechar chat de dúvidas" : "Abrir chat de dúvidas"}
+      >
+        <i className={`fas ${open ? "fa-times" : "fa-comments"}`} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="br-card assistente-chat-panel">
+          <div className="assistente-chat-header">
+            <div>
+              <strong>Chat de dúvidas</strong>
+              <span>CAR Proativo</span>
+            </div>
+          </div>
+          <div className="assistente-chat-body" aria-live="polite">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`assistente-chat-message assistente-chat-message--${message.from}`}
+              >
+                {message.text}
+              </div>
+            ))}
+          </div>
+          <div className="assistente-chat-quick">
+            {QUICK_DOUBTS.map((question) => (
+              <button
+                key={question}
+                type="button"
+                className="br-button secondary small"
+                onClick={() => ask(question)}
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+          <form onSubmit={submit} className="assistente-chat-form">
+            <div className="br-input">
+              <input
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Digite sua dúvida"
+                aria-label="Digite sua dúvida"
+              />
+            </div>
+            <button type="submit" className="br-button primary circle" aria-label="Enviar dúvida">
+              <i className="fas fa-paper-plane" aria-hidden="true" />
+            </button>
+          </form>
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function answerDoubt(question: string) {
+  const normalized = question.toLowerCase();
+  if (normalized.includes("cpf") || normalized.includes("login")) {
+    return "Consulta por CPF deve ser tratada como fluxo autenticado ou autorizado. Na demonstração, usamos CPFs fictícios para explicar o diagnóstico sem expor dados reais.";
+  }
+  if (normalized.includes("local")) {
+    return "Sim. Uma localização compartilhada pode virar latitude e longitude, depois ser cruzada com município, código IBGE e bases públicas regionais.";
+  }
+  if (normalized.includes("whatsapp") || normalized.includes("zap")) {
+    return "Sim. A ideia funciona em WhatsApp: o usuário envia texto ou localização, o backend recebe o webhook e responde com orientação ou resultado público.";
+  }
+  if (normalized.includes("sicar") || normalized.includes("api")) {
+    return "O SICAR público pode apoiar consultas regionais, como município e módulo fiscal. Dados pessoais ou fluxos sensíveis devem respeitar autenticação e autorização.";
+  }
+  if (normalized.includes("sigef") || normalized.includes("incra")) {
+    return "SIGEF/INCRA tem endpoints públicos para algumas consultas, como parcela por código ou filtros geográficos. APIs restritas exigem credencial institucional.";
+  }
+  if (
+    normalized.includes("crédito") ||
+    normalized.includes("credito") ||
+    normalized.includes("pronaf")
+  ) {
+    return "O CAR ajuda na preparação para crédito rural porque organiza sinais ambientais do imóvel. A liberação do PRONAF ainda depende do banco, documentação e critérios da política pública.";
+  }
+  if (normalized.includes("car")) {
+    return "CAR é o Cadastro Ambiental Rural. Ele registra informações ambientais do imóvel rural e apoia regularização, análise territorial e acesso a políticas públicas.";
+  }
+  return "Posso explicar o conceito, indicar qual fluxo exige Gov.br, diferenciar dados públicos de dados sensíveis ou mostrar como isso vira WhatsApp, widget ou experiência web.";
 }
 
 function ProfileChooser({ onChoose }: { onChoose: (profile: Profile) => void }) {

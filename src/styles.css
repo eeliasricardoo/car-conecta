@@ -174,6 +174,101 @@ html {
   margin-top: 4px;
 }
 
+.assistente-chat {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 90;
+}
+
+.assistente-chat-toggle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  box-shadow: var(--surface-shadow-sm);
+}
+
+.assistente-chat-panel {
+  width: 360px;
+  max-height: calc(100vh - 128px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 0;
+  box-shadow: var(--surface-shadow-md);
+  margin-bottom: 64px;
+}
+
+.assistente-chat-header {
+  background: var(--color-primary-default);
+  color: var(--pure-0);
+  padding: var(--spacing-scale-2x);
+}
+
+.assistente-chat-header strong,
+.assistente-chat-header span {
+  display: block;
+}
+
+.assistente-chat-header span {
+  font-size: var(--font-size-scale-down-01);
+  opacity: 0.88;
+  margin-top: 2px;
+}
+
+.assistente-chat-body {
+  min-height: 220px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: var(--spacing-scale-2x);
+  background: var(--color-secondary-01);
+}
+
+.assistente-chat-message {
+  border-radius: 8px;
+  padding: var(--spacing-scale-base) var(--spacing-scale-2x);
+  line-height: 1.45;
+  font-size: var(--font-size-scale-down-01);
+  margin-bottom: var(--spacing-scale-base);
+  max-width: 92%;
+}
+
+.assistente-chat-message--bot {
+  background: var(--pure-0);
+  border: 1px solid var(--color-secondary-03);
+  color: var(--color-secondary-08);
+}
+
+.assistente-chat-message--user {
+  background: var(--color-primary-pastel-01);
+  color: var(--color-primary-darken-02);
+  margin-left: auto;
+}
+
+.assistente-chat-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-scale-half);
+  padding: var(--spacing-scale-base) var(--spacing-scale-2x);
+  border-top: 1px solid var(--color-secondary-03);
+  background: var(--pure-0);
+}
+
+.assistente-chat-form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-scale-base);
+  padding: var(--spacing-scale-2x);
+  border-top: 1px solid var(--color-secondary-03);
+  background: var(--pure-0);
+}
+
+.assistente-chat-form .br-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 @media (max-width: 767px) {
   .section-hero {
     padding-top: 40px;
@@ -231,6 +326,25 @@ html {
   /* Busca CPF: botão ocupa largura total quando quebra linha */
   .search-btn {
     width: 100%;
+  }
+
+  .assistente-chat {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    top: auto;
+  }
+
+  .assistente-chat-toggle {
+    bottom: 0;
+    right: 0;
+    top: auto;
+  }
+
+  .assistente-chat-panel {
+    width: 100%;
+    max-height: 70vh;
+    margin-bottom: 56px;
   }
 
   /* Tab pills: distribuição uniforme */
