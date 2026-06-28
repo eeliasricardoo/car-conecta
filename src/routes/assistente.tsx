@@ -98,6 +98,21 @@ const QUICK_DOUBTS = [
   "Serve para WhatsApp?",
 ];
 
+const DEMONSTRATIVO_PDF_URL = "/demo/Demonstrativo_PE-2613909-4B8F858952E8403AA02C95B630239DF7.pdf";
+
+const DEMO_REPORT = {
+  codigo: "PE-2613909-4B8F858952E8403AA02C95B630239DF7",
+  municipio: "Serra Talhada",
+  uf: "Pernambuco",
+  dataInscricao: "30/03/2020",
+  ultimaRetificacao: "30/03/2020",
+  latitude: "8°8'40.611\"S",
+  longitude: "38°26'33.615\"W",
+  area: "68,47 ha",
+  modulos: "1,71",
+  status: "Ativo",
+};
+
 function AssistentePage() {
   const [profile, setProfile] = useState<Profile>(null);
 
@@ -598,18 +613,261 @@ function DiagnosticSummary({ data }: { data: DiagnosticoResult }) {
   }
 
   return (
-    <div style={resultCardStyle}>
-      <strong>{data.sicar.nome_imovel}</strong>
-      <p style={mutedTextStyle}>
-        CAR {data.sicar.codigo_car} · {data.sicar.status} · risco {data.nivel_risco}
-      </p>
-      {data.sicar.pendencias.length > 0 && (
-        <ul style={{ margin: "8px 0 0", paddingLeft: 18, color: "#374151" }}>
-          {data.sicar.pendencias.map((pendencia) => (
-            <li key={pendencia}>{pendencia}</li>
-          ))}
-        </ul>
-      )}
+    <ResultSummaryCard
+      source="cpf"
+      title={`Encontramos o CAR de ${data.sicar.nome_imovel}`}
+      body={`O imóvel está em ${data.sicar.nome_municipio}/${data.sicar.uf}. O status atual é ${formatStatus(data.sicar.status)} e o nível de atenção é ${data.nivel_risco}.`}
+      record={data.sicar}
+    />
+  );
+}
+
+function ResultSummaryCard({
+  source,
+  title,
+  body,
+  record,
+  location,
+}: {
+  source: string;
+  title: string;
+  body: string;
+  record?: SicarRecord;
+  location?: LocationResult;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="br-card"
+      style={{
+        borderRadius: 8,
+        marginTop: 18,
+        borderLeft: "4px solid var(--color-success-default, #168821)",
+      }}
+    >
+      <span className="br-tag success" style={{ marginBottom: 10 }}>
+        Resultado encontrado
+      </span>
+      <h3 style={{ margin: "0 0 8px", fontSize: 20 }}>{title}</h3>
+      <p style={{ ...mutedTextStyle, maxWidth: 760 }}>{body}</p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 170px), 1fr))",
+          gap: 12,
+          margin: "16px 0",
+        }}
+      >
+        <MiniFact label="Origem da busca" value={source} />
+        <MiniFact
+          label="Município"
+          value={
+            record
+              ? `${record.nome_municipio}/${record.uf}`
+              : `${location?.municipio_localizacao?.nome}/${location?.municipio_localizacao?.uf}`
+          }
+        />
+        <MiniFact label="Registro" value={record?.codigo_car ?? DEMO_REPORT.codigo} />
+      </div>
+      <button type="button" className="br-button primary" onClick={() => setOpen(true)}>
+        Ver demonstrativo completo
+      </button>
+      {open && <ReportModal record={record} location={location} onClose={() => setOpen(false)} />}
+    </div>
+  );
+}
+
+function MiniFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: "var(--color-secondary-01)", borderRadius: 8, padding: 12 }}>
+      <span style={{ display: "block", color: "var(--color-secondary-07)", fontSize: 12 }}>
+        {label}
+      </span>
+      <strong style={{ display: "block", marginTop: 4, wordBreak: "break-word" }}>{value}</strong>
+    </div>
+  );
+}
+
+function formatStatus(status: SicarRecord["status"]) {
+  const labels: Record<SicarRecord["status"], string> = {
+    regular: "regular",
+    pendente: "pendente",
+    sobreposicao: "com sobreposição",
+    cancelado: "cancelado",
+    nao_encontrado: "não encontrado",
+  };
+  return labels[status];
+}
+
+function formatDate(value: string) {
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+}
+
+function ReportModal({
+  record,
+  location,
+  onClose,
+}: {
+  record?: SicarRecord;
+  location?: LocationResult;
+  onClose: () => void;
+}) {
+  const report = record
+    ? {
+        codigo: record.codigo_car,
+        municipio: record.nome_municipio,
+        uf: record.uf,
+        dataInscricao: formatDate(record.data_inscricao),
+        ultimaRetificacao: formatDate(record.data_ultima_atualizacao),
+        latitude: "Coordenada disponível no demonstrativo oficial",
+        longitude: "Coordenada disponível no demonstrativo oficial",
+        area: `${record.area_ha.toLocaleString("pt-BR")} ha`,
+        modulos: "Consulte o demonstrativo",
+        status: formatStatus(record.status),
+      }
+    : DEMO_REPORT;
+  const municipio = location?.municipio_localizacao;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="report-modal-title"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        background: "rgba(15,23,42,0.46)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+    >
+      <div
+        className="br-card"
+        style={{
+          width: "min(980px, 100%)",
+          maxHeight: "88vh",
+          overflow: "auto",
+          borderRadius: 8,
+          padding: 0,
+        }}
+      >
+        <div
+          style={{
+            padding: "20px 24px",
+            borderBottom: "1px solid var(--color-secondary-03)",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 16,
+          }}
+        >
+          <div>
+            <span className="br-tag info">Demonstrativo do CAR</span>
+            <h2 id="report-modal-title" style={{ margin: "12px 0 0", fontSize: 26 }}>
+              Entenda o imóvel sem linguagem complicada
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="br-button circle secondary"
+            onClick={onClose}
+            aria-label="Fechar demonstrativo"
+          >
+            <i className="fas fa-times" aria-hidden="true" />
+          </button>
+        </div>
+        <div style={{ padding: 24 }}>
+          <div className="br-message success" role="status">
+            <div className="icon">
+              <i className="fas fa-check-circle" aria-hidden="true" />
+            </div>
+            <div className="content">
+              <span className="message-title">O CAR foi encontrado.</span>
+              <span className="message-body">
+                Mostramos abaixo os dados principais em linguagem simples. O PDF oficial continua
+                disponível para conferência e download.
+              </span>
+            </div>
+          </div>
+
+          <section style={{ marginTop: 22 }}>
+            <h3 style={{ marginTop: 0 }}>Resumo do imóvel rural</h3>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+                gap: 12,
+              }}
+            >
+              <MiniFact label="Registro no CAR" value={report.codigo} />
+              <MiniFact label="Município" value={`${report.municipio}/${report.uf}`} />
+              <MiniFact label="Data de inscrição" value={report.dataInscricao} />
+              <MiniFact label="Última retificação" value={report.ultimaRetificacao} />
+              <MiniFact label="Área do imóvel" value={report.area} />
+              <MiniFact label="Módulos fiscais" value={report.modulos} />
+              <MiniFact label="Latitude" value={report.latitude} />
+              <MiniFact label="Longitude" value={report.longitude} />
+            </div>
+          </section>
+
+          <section style={{ marginTop: 24 }}>
+            <h3>Situação do CAR</h3>
+            <div
+              style={{
+                borderLeft: "6px solid var(--color-success-default, #168821)",
+                paddingLeft: 16,
+              }}
+            >
+              <strong style={{ color: "var(--color-success-default, #168821)", fontSize: 20 }}>
+                {report.status}
+              </strong>
+              <p style={mutedTextStyle}>
+                Em termos simples: esse cadastro tem informações suficientes para consulta
+                demonstrativa. Quando houver pendências, elas aparecem abaixo para orientar o
+                próximo passo.
+              </p>
+            </div>
+            {record?.pendencias.length ? (
+              <div className="br-message warning" role="status" style={{ marginTop: 16 }}>
+                <div className="icon">
+                  <i className="fas fa-exclamation-triangle" aria-hidden="true" />
+                </div>
+                <div className="content">
+                  <span className="message-title">Pontos de atenção</span>
+                  <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                    {record.pendencias.map((pendencia) => (
+                      <li key={pendencia}>{pendencia}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : null}
+            {municipio && (
+              <p style={mutedTextStyle}>
+                A localização enviada aponta para {municipio.nome}/{municipio.uf}, código IBGE{" "}
+                {municipio.ibge}. O demonstrativo abaixo usa um registro público de exemplo para
+                mostrar como o relatório final será apresentado.
+              </p>
+            )}
+          </section>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 24 }}>
+            <a href={DEMONSTRATIVO_PDF_URL} download className="br-button primary">
+              <i className="fas fa-download" aria-hidden="true" />
+              Baixar demonstrativo em PDF
+            </a>
+            <button type="button" className="br-button secondary" disabled>
+              <i className="fas fa-layer-group" aria-hidden="true" />
+              Baixar feições em breve
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -699,13 +957,12 @@ function LocationPanel() {
         </button>
       </div>
       {result && (
-        <div style={resultCardStyle}>
-          <strong>{result.mensagem}</strong>
-          <p style={mutedTextStyle}>
-            {result.municipio_localizacao?.nome}/{result.municipio_localizacao?.uf} · IBGE
-            (Instituto Brasileiro de Geografia e Estatística) {result.municipio_localizacao?.ibge}
-          </p>
-        </div>
+        <ResultSummaryCard
+          source="localização"
+          title={`Localização identificada em ${result.municipio_localizacao?.nome}/${result.municipio_localizacao?.uf}`}
+          body="Com a localização, encontramos o município, o código IBGE e um demonstrativo público para você entender o tipo de informação que aparece no CAR."
+          location={result}
+        />
       )}
     </div>
   );
@@ -734,12 +991,12 @@ function CarNumberPanel() {
         <p style={mutedTextStyle}>Código não encontrado nos registros demonstrativos.</p>
       )}
       {record && (
-        <div style={resultCardStyle}>
-          <strong>{record.nome_imovel}</strong>
-          <p style={mutedTextStyle}>
-            {record.codigo_car} · {record.status} · {record.nome_municipio}/{record.uf}
-          </p>
-        </div>
+        <ResultSummaryCard
+          source="número do CAR"
+          title={`Encontramos ${record.nome_imovel}`}
+          body={`Esse CAR fica em ${record.nome_municipio}/${record.uf}, tem ${record.area_ha} ha e está com status ${formatStatus(record.status)}.`}
+          record={record}
+        />
       )}
     </div>
   );
@@ -747,24 +1004,140 @@ function CarNumberPanel() {
 
 function MapPanel({ audience }: { audience: "agricultor" | "parceiro" }) {
   return (
-    <div style={panelStyle}>
-      <strong>{audience === "agricultor" ? "Encontre no mapa" : "Mapa de atendimentos"}</strong>
+    <div className="br-card" style={{ borderRadius: 8, padding: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <strong style={{ display: "block", fontSize: 18 }}>
+            {audience === "agricultor" ? "Encontre no mapa" : "Mapa de atendimentos"}
+          </strong>
+          <p style={{ ...mutedTextStyle, marginBottom: 0 }}>
+            Visualização territorial com base satélite e camadas demonstrativas do CAR.
+          </p>
+        </div>
+        {audience === "parceiro" && (
+          <span className="br-tag info" style={{ height: "fit-content" }}>
+            Serra Talhada/PE
+          </span>
+        )}
+      </div>
+      <SatelliteParcelMap />
+    </div>
+  );
+}
+
+function SatelliteParcelMap() {
+  const tiles = [
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4282/3222",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4282/3223",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4282/3224",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4283/3222",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4283/3223",
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4283/3224",
+  ];
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        height: 420,
+        marginTop: 16,
+        overflow: "hidden",
+        borderRadius: 8,
+        border: "1px solid var(--color-secondary-04)",
+        background: "#1f2937",
+      }}
+    >
       <div
         style={{
-          height: 260,
-          marginTop: 14,
-          border: "1px solid #111827",
-          background:
-            "linear-gradient(135deg, rgba(19,81,180,0.12), rgba(22,136,33,0.12)), repeating-linear-gradient(45deg, transparent 0 22px, rgba(15,23,42,0.04) 22px 24px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#1f2937",
-          fontWeight: 800,
-          fontSize: 22,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateRows: "repeat(2, 1fr)",
+          width: "100%",
+          height: "100%",
+          filter: "saturate(1.05) contrast(1.05)",
         }}
       >
-        mapa · Cáceres/MT · SICAR (Sistema de Cadastro Ambiental Rural) público
+        {tiles.map((tile) => (
+          <img
+            key={tile}
+            src={tile}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            loading="lazy"
+          />
+        ))}
+      </div>
+      <svg
+        viewBox="0 0 900 420"
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+      >
+        {Array.from({ length: 22 }).map((_, index) => {
+          const x = 40 + index * 38;
+          const y = index % 2 === 0 ? 40 : 210;
+          return (
+            <polygon
+              key={index}
+              points={`${x},${y} ${x + 130},${y + 18} ${x + 112},${y + 152} ${x - 18},${y + 126}`}
+              fill="rgba(255, 242, 0, 0.10)"
+              stroke={index % 4 === 0 ? "#ff8a00" : "#fff200"}
+              strokeWidth="2"
+            />
+          );
+        })}
+        <path
+          d="M82 318 C190 286 242 340 340 288 S510 246 638 302 S794 304 864 246"
+          fill="none"
+          stroke="#ff8a00"
+          strokeWidth="3"
+        />
+      </svg>
+      <div
+        style={{
+          position: "absolute",
+          top: 18,
+          right: 18,
+          display: "grid",
+          gap: 8,
+        }}
+      >
+        <button type="button" className="br-button circle small" aria-label="Aproximar mapa">
+          <i className="fas fa-plus" aria-hidden="true" />
+        </button>
+        <button type="button" className="br-button circle small" aria-label="Afastar mapa">
+          <i className="fas fa-minus" aria-hidden="true" />
+        </button>
+        <button type="button" className="br-button circle small" aria-label="Camadas do mapa">
+          <i className="fas fa-layer-group" aria-hidden="true" />
+        </button>
+      </div>
+      <button
+        type="button"
+        className="br-button primary"
+        style={{
+          position: "absolute",
+          left: "35%",
+          top: "36%",
+          borderRadius: 6,
+          boxShadow: "0 8px 20px rgba(0,0,0,0.24)",
+        }}
+      >
+        Ver detalhes do imóvel
+      </button>
+      <div
+        style={{
+          position: "absolute",
+          left: 14,
+          bottom: 14,
+          background: "rgba(255,255,255,0.92)",
+          borderRadius: 6,
+          padding: "8px 10px",
+          color: "var(--color-secondary-08)",
+          fontWeight: 700,
+          fontSize: 13,
+        }}
+      >
+        Lat: -8.17649 Long: -38.34761 · Zoom: 13 · Escala: 38 m
       </div>
     </div>
   );
@@ -864,6 +1237,7 @@ function PartnerDashboard({ institution }: { institution: string }) {
   const [submittedCpf, setSubmittedCpf] = useState<string | null>(null);
   const [showWidget, setShowWidget] = useState(false);
   const { data, isFetching } = useDiagnostico(submittedCpf);
+  const accountName = institution.includes("EMATER") ? "EMATER — Mato Grosso" : institution;
 
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -879,20 +1253,46 @@ function PartnerDashboard({ institution }: { institution: string }) {
   return (
     <main className="container-lg" style={{ padding: "42px 16px 96px" }}>
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <section style={{ ...heroCardStyle, marginBottom: 24 }}>
-          <span style={eyebrowStyle}>Portal do parceiro</span>
+        <section className="br-card" style={{ borderRadius: 8, marginBottom: 24 }}>
+          <span className="br-tag success" style={{ fontWeight: 700 }}>
+            Conta parceira ativa
+          </span>
           <h1
-            style={{ margin: "10px 0 8px", fontSize: "clamp(30px, 4vw, 48px)", color: "#0f172a" }}
+            style={{
+              margin: "16px 0 8px",
+              fontSize: "var(--font-size-scale-up-06, 2.5rem)",
+              lineHeight: 1.12,
+              color: "var(--color-secondary-09)",
+            }}
           >
-            Consultas, mapa e widget para atendimento distribuído.
+            Bem-vindo, {accountName}.
           </h1>
           <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
-            {institution} acessa uma visão operacional para buscar CPF (Cadastro de Pessoas Físicas)
-            em contexto autorizado, visualizar território atendido e gerar um ponto de entrada para
-            o site institucional.
+            Seu perfil institucional está pronto para apoiar produtores no atendimento assistido:
+            consultar produtores em contexto autorizado, visualizar áreas no território e instalar o
+            widget no site da entidade.
           </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+              gap: 12,
+              marginTop: 22,
+            }}
+          >
+            {[
+              ["Perfil parceiro", "Atendimento técnico rural habilitado"],
+              ["Área de atuação", "Mato Grosso e regiões demonstrativas"],
+              ["Canais", "Portal web, widget e WhatsApp"],
+            ].map(([label, value]) => (
+              <div key={label} className="br-card" style={{ borderRadius: 8, padding: 16 }}>
+                <span style={{ color: "var(--color-secondary-07)", fontSize: 13 }}>{label}</span>
+                <strong style={{ display: "block", marginTop: 4 }}>{value}</strong>
+              </div>
+            ))}
+          </div>
         </section>
-        <div style={surfaceStyle}>
+        <div className="br-card" style={{ borderRadius: 8 }}>
           <div
             style={{
               display: "grid",
@@ -934,6 +1334,36 @@ function PartnerDashboard({ institution }: { institution: string }) {
                 Adicionar Widget no site
               </button>
               {showWidget && <pre style={codeBlockStyle}>{widgetSnippet}</pre>}
+            </div>
+          </div>
+          <div style={{ marginTop: 22 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+                gap: 12,
+                marginBottom: 14,
+              }}
+            >
+              <label style={labelStyle}>
+                UF
+                <select style={inputStyle} defaultValue="PE">
+                  <option value="PE">Pernambuco</option>
+                  <option value="MT">Mato Grosso</option>
+                </select>
+              </label>
+              <label style={labelStyle}>
+                Município
+                <input style={inputStyle} value="Serra Talhada" readOnly />
+              </label>
+              <label style={labelStyle}>
+                Número de registro no CAR
+                <input
+                  style={inputStyle}
+                  value="PE-2613909-4B8F858952E8403AA02C95B630239DF7"
+                  readOnly
+                />
+              </label>
             </div>
           </div>
           <MapPanel audience="parceiro" />
