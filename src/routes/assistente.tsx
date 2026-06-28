@@ -44,13 +44,23 @@ const INSTITUTIONS = [
 
 function AssistentePage() {
   const [profile, setProfile] = useState<Profile>(null);
+  const [widgetOpen, setWidgetOpen] = useState(false);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f4f7f9", color: "#1f2937" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background:
+          "radial-gradient(circle at 18% 8%, rgba(52,199,89,0.12), transparent 28%), linear-gradient(180deg, #f8faf7 0%, #eef5f1 100%)",
+        color: "#1f2937",
+      }}
+    >
       <GovHeader onHome={() => setProfile(null)} />
       {!profile && <ProfileChooser onChoose={setProfile} />}
       {profile === "agricultor" && <FarmerHub />}
       {profile === "parceiro" && <PartnerFlow />}
+      <CreditWidgetButton onClick={() => setWidgetOpen((open) => !open)} />
+      {widgetOpen && <CreditWidgetPanel onClose={() => setWidgetOpen(false)} />}
     </div>
   );
 }
@@ -59,11 +69,13 @@ function GovHeader({ onHome }: { onHome: () => void }) {
   return (
     <header
       style={{
-        height: 68,
-        background: "#9ed2f3",
-        borderBottom: "1px solid #0f172a",
+        minHeight: 76,
+        background: "rgba(255,255,255,0.92)",
+        borderBottom: "1px solid rgba(15,23,42,0.08)",
+        boxShadow: "0 10px 30px rgba(15,23,42,0.04)",
         display: "flex",
         alignItems: "center",
+        backdropFilter: "blur(14px)",
       }}
     >
       <div className="container-lg">
@@ -86,12 +98,12 @@ function GovHeader({ onHome }: { onHome: () => void }) {
               gap: 12,
               color: "#111827",
               fontWeight: 800,
-              fontSize: 22,
+              fontSize: 18,
               padding: 0,
             }}
           >
             <img src={govBrLogo} alt="Gov.br" style={{ height: 30 }} />
-            <span>Assistente CAR</span>
+            <span style={{ color: "#168821" }}>CAR Proativo</span>
           </button>
           <nav style={{ display: "flex", gap: 8 }}>
             <Link to="/demo" style={navPillStyle}>
@@ -109,52 +121,51 @@ function GovHeader({ onHome }: { onHome: () => void }) {
 
 function ProfileChooser({ onChoose }: { onChoose: (profile: Profile) => void }) {
   return (
-    <main className="container-lg" style={{ padding: "72px 16px" }}>
-      <section
-        style={{
-          maxWidth: 860,
-          minHeight: 420,
-          margin: "0 auto",
-          border: "1px solid #111827",
-          background: "#e9eef2",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+    <main className="container-lg" style={{ padding: "64px 16px 88px" }}>
+      <section style={{ maxWidth: 1120, margin: "0 auto" }}>
         <div
           style={{
-            background: "#9ed2f3",
-            borderBottom: "1px solid #111827",
-            padding: "10px 18px",
-            fontSize: 22,
-            fontWeight: 800,
-          }}
-        >
-          Gov Br
-        </div>
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
+            gap: 32,
             alignItems: "center",
-            justifyContent: "center",
-            gap: 28,
-            flexWrap: "wrap",
-            padding: 32,
           }}
         >
-          <ProfileCard
-            icon="fa-seedling"
-            title="Sou Agricultor"
-            description="Consultar status, localização, mapa e caminhos para cadastrar o CAR."
-            onClick={() => onChoose("agricultor")}
-          />
-          <ProfileCard
-            icon="fa-handshake"
-            title="Sou parceiro CAR"
-            description="Acessar painel de consulta, mapa e widget para site parceiro."
-            onClick={() => onChoose("parceiro")}
-          />
+          <div>
+            <span style={eyebrowStyle}>Assistente web replicável</span>
+            <h1
+              style={{
+                fontSize: "clamp(38px, 5vw, 64px)",
+                lineHeight: 1.02,
+                margin: "16px 0",
+                color: "#0f172a",
+                maxWidth: 640,
+              }}
+            >
+              Um fluxo CAR para agricultor, parceiro e widget no site.
+            </h1>
+            <p style={{ ...mutedTextStyle, fontSize: 18, maxWidth: 620 }}>
+              A experiência começa pelo perfil e adapta o atendimento: orientação simples para o
+              produtor, painel operacional para parceiros e um widget reutilizável para canais
+              digitais.
+            </p>
+          </div>
+          <div style={heroCardStyle}>
+            <div style={{ display: "grid", gap: 14 }}>
+              <ProfileCard
+                icon="fa-seedling"
+                title="Sou Agricultor"
+                description="Acessar consultas guiadas, localização, mapa e caminhos para regularizar ou criar o CAR."
+                onClick={() => onChoose("agricultor")}
+              />
+              <ProfileCard
+                icon="fa-handshake"
+                title="Sou parceiro CAR"
+                description="Entrar no portal para buscar produtores, acompanhar mapa e instalar o widget no site."
+                onClick={() => onChoose("parceiro")}
+              />
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -177,17 +188,19 @@ function ProfileCard({
       type="button"
       onClick={onClick}
       style={{
-        width: 210,
-        minHeight: 220,
-        border: "1px solid #111827",
-        background: "#f8fafc",
-        padding: 22,
-        textAlign: "center",
-        display: "flex",
-        flexDirection: "column",
+        width: "100%",
+        minHeight: 132,
+        border: "1px solid rgba(15,23,42,0.08)",
+        borderRadius: 18,
+        background: "#fff",
+        padding: 20,
+        textAlign: "left",
+        display: "grid",
+        gridTemplateColumns: "58px 1fr",
         alignItems: "center",
-        justifyContent: "center",
-        gap: 12,
+        gap: 16,
+        boxShadow: "0 18px 38px rgba(15,23,42,0.08)",
+        cursor: "pointer",
       }}
     >
       <span
@@ -205,9 +218,140 @@ function ProfileCard({
       >
         <i className={`fas ${icon}`} aria-hidden="true" />
       </span>
-      <strong style={{ fontSize: 24, lineHeight: 1.2, color: "#1f2937" }}>{title}</strong>
-      <span style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.45 }}>{description}</span>
+      <span>
+        <strong style={{ display: "block", fontSize: 22, lineHeight: 1.2, color: "#1f2937" }}>
+          {title}
+        </strong>
+        <span
+          style={{
+            display: "block",
+            color: "#4b5563",
+            fontSize: 14,
+            lineHeight: 1.45,
+            marginTop: 6,
+          }}
+        >
+          {description}
+        </span>
+      </span>
     </button>
+  );
+}
+
+function CreditWidgetButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Abrir widget Crédito Rural"
+      style={{
+        position: "fixed",
+        right: 30,
+        bottom: 30,
+        width: 116,
+        height: 116,
+        border: 0,
+        borderRadius: 28,
+        background: "#34C759",
+        padding: 0,
+        zIndex: 50,
+        boxShadow: "0 20px 48px rgba(22, 136, 33, 0.34)",
+        color: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 2,
+        cursor: "pointer",
+      }}
+    >
+      <svg width="38" height="28" viewBox="0 0 38 28" fill="none" aria-hidden="true">
+        <ellipse cx="19" cy="8" rx="13" ry="6" fill="#FFEA00" />
+        <path d="M6 8v5c0 3.31 5.82 6 13 6s13-2.69 13-6V8" stroke="#FFEA00" strokeWidth="5" />
+        <ellipse cx="19" cy="8" rx="9" ry="3.5" fill="#34C759" opacity="0.55" />
+        <ellipse cx="19" cy="8" rx="13" ry="6" stroke="#FFEA00" strokeWidth="3" />
+      </svg>
+      <strong style={{ fontSize: 23, lineHeight: 0.98 }}>Crédito</strong>
+      <strong style={{ fontSize: 23, lineHeight: 0.98 }}>Rural</strong>
+    </button>
+  );
+}
+
+function CreditWidgetPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <aside
+      style={{
+        position: "fixed",
+        right: 28,
+        bottom: 160,
+        width: "min(360px, calc(100vw - 32px))",
+        background: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 22px 70px rgba(15,23,42,0.2)",
+        overflow: "hidden",
+        zIndex: 49,
+      }}
+    >
+      <div
+        style={{
+          background: "#00a000",
+          color: "#fff",
+          padding: "16px 18px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <strong style={{ display: "block", fontSize: 18 }}>CAR Assistente</strong>
+          <span style={{ fontSize: 13 }}>Seu facilitador de crédito Rural</span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar widget"
+          style={{
+            border: 0,
+            background: "rgba(255,255,255,0.22)",
+            color: "#fff",
+            width: 28,
+            height: 28,
+            borderRadius: "50%",
+          }}
+        >
+          ×
+        </button>
+      </div>
+      <div style={{ padding: 18 }}>
+        <p style={{ ...mutedTextStyle, marginTop: 0 }}>
+          Use este widget em portais parceiros para orientar produtores sobre CAR, PRONAF e
+          consultas por localização.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {["O que é o CAR?", "Como libero o crédito do PRONAF?", "Como o CAR pode me ajudar?"].map(
+            (item) => (
+              <button key={item} type="button" style={chipStyle}>
+                {item}
+              </button>
+            ),
+          )}
+        </div>
+        <div
+          style={{
+            marginTop: 16,
+            border: "1px solid #e5e7eb",
+            borderRadius: 999,
+            padding: "10px 12px",
+            color: "#9ca3af",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          Digitar...
+          <i className="fas fa-arrow-up" aria-hidden="true" />
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -215,34 +359,26 @@ function FarmerHub() {
   const [panel, setPanel] = useState<FarmerPanel>(null);
 
   return (
-    <main className="container-lg" style={{ padding: "36px 16px 64px" }}>
-      <div
-        style={{
-          maxWidth: 980,
-          margin: "0 auto",
-          border: "1px solid #111827",
-          background: "#e9eef2",
-        }}
-      >
-        <div
-          style={{
-            background: "#9ed2f3",
-            borderBottom: "1px solid #111827",
-            padding: "10px 18px",
-            fontSize: 22,
-            fontWeight: 800,
-          }}
-        >
-          Gov Br
-        </div>
-        <div style={{ padding: "44px 28px" }}>
-          <h1 style={{ textAlign: "center", fontSize: 28, color: "#1f2937", margin: "0 0 34px" }}>
-            Conferir Status do CAR
+    <main className="container-lg" style={{ padding: "42px 16px 96px" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <section style={{ ...heroCardStyle, marginBottom: 24 }}>
+          <span style={eyebrowStyle}>Experiência do agricultor</span>
+          <h1
+            style={{ margin: "10px 0 8px", fontSize: "clamp(30px, 4vw, 48px)", color: "#0f172a" }}
+          >
+            Conferir CAR e avançar para crédito rural sem perder contexto.
           </h1>
+          <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
+            O produtor escolhe uma necessidade e recebe um caminho guiado. CPF fica sinalizado como
+            fluxo com autenticação Gov.br; localização, mapa e número do CAR simulam consultas
+            públicas.
+          </p>
+        </section>
+        <div style={surfaceStyle}>
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
               gap: 16,
             }}
           >
@@ -284,21 +420,27 @@ function HubButton({ title, icon, onClick }: { title: string; icon: string; onCl
       type="button"
       onClick={onClick}
       style={{
-        border: "1px solid #111827",
-        background: "#f8fafc",
-        minHeight: 116,
-        padding: 16,
+        border: "1px solid rgba(15,23,42,0.08)",
+        borderRadius: 16,
+        background: "#fff",
+        minHeight: 128,
+        padding: 18,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
         gap: 10,
         color: "#1f2937",
         fontWeight: 800,
-        fontSize: 20,
+        fontSize: 18,
         lineHeight: 1.2,
+        boxShadow: "0 14px 34px rgba(15,23,42,0.06)",
+        cursor: "pointer",
       }}
     >
-      <i className={`fas ${icon}`} style={{ color: "#1351b4" }} aria-hidden="true" />
+      <span style={miniIconStyle}>
+        <i className={`fas ${icon}`} aria-hidden="true" />
+      </span>
       {title}
     </button>
   );
@@ -568,8 +710,8 @@ function PartnerFlow() {
   if (logged) return <PartnerDashboard institution={institution} />;
 
   return (
-    <main className="container-lg" style={{ padding: "72px 16px" }}>
-      <div style={{ width: "100%", maxWidth: 520, margin: "0 auto" }}>
+    <main className="container-lg" style={{ padding: "56px 16px 88px" }}>
+      <div style={{ width: "100%", maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 32 }}>
           {["Solicitação", "Aprovação", "Acesso"].map((label, index) => (
             <div
@@ -621,7 +763,7 @@ function PartnerFlow() {
         </div>
         <form
           onSubmit={login}
-          style={{ ...panelStyle, display: "flex", flexDirection: "column", gap: 18 }}
+          style={{ ...surfaceStyle, display: "flex", flexDirection: "column", gap: 18 }}
         >
           <label style={labelStyle}>
             Instituição
@@ -682,39 +824,31 @@ function PartnerDashboard({ institution }: { institution: string }) {
   );
 
   return (
-    <main className="container-lg" style={{ padding: "36px 16px 64px" }}>
-      <div
-        style={{
-          maxWidth: 980,
-          margin: "0 auto",
-          border: "1px solid #111827",
-          background: "#e9eef2",
-        }}
-      >
-        <div
-          style={{
-            background: "#9ed2f3",
-            borderBottom: "1px solid #111827",
-            padding: "10px 18px",
-            fontSize: 22,
-            fontWeight: 800,
-          }}
-        >
-          Gov Br
-        </div>
-        <div style={{ padding: "42px 34px" }}>
-          <h1 style={{ textAlign: "center", color: "#1f2937", margin: "0 0 26px", fontSize: 28 }}>
-            Painel do Parceiro CAR
+    <main className="container-lg" style={{ padding: "42px 16px 96px" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <section style={{ ...heroCardStyle, marginBottom: 24 }}>
+          <span style={eyebrowStyle}>Portal do parceiro</span>
+          <h1
+            style={{ margin: "10px 0 8px", fontSize: "clamp(30px, 4vw, 48px)", color: "#0f172a" }}
+          >
+            Consultas, mapa e widget para atendimento distribuído.
           </h1>
-          <p style={{ textAlign: "center", color: "#6b7280", marginTop: -16 }}>{institution}</p>
+          <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
+            {institution} acessa uma visão operacional para buscar CPF em contexto autorizado,
+            visualizar território atendido e gerar um ponto de entrada para o site institucional.
+          </p>
+        </section>
+        <div style={surfaceStyle}>
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
               gap: 18,
+              alignItems: "start",
             }}
           >
-            <div>
+            <div style={panelStyle}>
+              <strong style={{ display: "block", marginBottom: 12 }}>Buscar produtor</strong>
               <form onSubmit={search} style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                 <input
                   value={cpf}
@@ -727,19 +861,23 @@ function PartnerDashboard({ institution }: { institution: string }) {
               </form>
               {data && <DiagnosticSummary data={data} />}
             </div>
-            <div>
+            <div style={panelStyle}>
+              <strong style={{ display: "block", marginBottom: 12 }}>
+                Widget para site parceiro
+              </strong>
               <button
                 type="button"
                 onClick={() => setShowWidget((value) => !value)}
                 style={{
-                  ...secondaryButtonStyle,
+                  ...primaryButtonStyle,
                   width: "100%",
                   minHeight: 72,
                   justifyContent: "center",
-                  fontSize: 20,
+                  fontSize: 18,
                 }}
               >
-                Adicionar Widget no meu site
+                <i className="fas fa-code" aria-hidden="true" />
+                Adicionar Widget no site
               </button>
               {showWidget && <pre style={codeBlockStyle}>{widgetSnippet}</pre>}
             </div>
@@ -754,7 +892,7 @@ function PartnerDashboard({ institution }: { institution: string }) {
 const navPillStyle = {
   color: "#111827",
   textDecoration: "none",
-  border: "1px solid rgba(15,23,42,0.24)",
+  border: "1px solid rgba(15,23,42,0.12)",
   borderRadius: 999,
   padding: "8px 12px",
   background: "#fff",
@@ -762,12 +900,40 @@ const navPillStyle = {
   fontSize: 13,
 } as const;
 
+const eyebrowStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  width: "fit-content",
+  borderRadius: 999,
+  background: "#dcfce7",
+  color: "#168821",
+  padding: "7px 12px",
+  fontWeight: 900,
+  fontSize: 13,
+} as const;
+
+const heroCardStyle = {
+  background: "rgba(255,255,255,0.86)",
+  border: "1px solid rgba(15,23,42,0.08)",
+  borderRadius: 24,
+  padding: 28,
+  boxShadow: "0 24px 70px rgba(15,23,42,0.10)",
+} as const;
+
+const surfaceStyle = {
+  background: "rgba(255,255,255,0.92)",
+  border: "1px solid rgba(15,23,42,0.08)",
+  borderRadius: 24,
+  padding: 28,
+  boxShadow: "0 24px 70px rgba(15,23,42,0.08)",
+} as const;
+
 const panelStyle = {
   background: "#fff",
-  border: "1px solid #d1d5db",
-  borderRadius: 8,
+  border: "1px solid rgba(15,23,42,0.08)",
+  borderRadius: 16,
   padding: 22,
-  boxShadow: "0 10px 30px rgba(15,23,42,0.06)",
+  boxShadow: "0 12px 32px rgba(15,23,42,0.06)",
 } as const;
 
 const mutedTextStyle = {
@@ -812,7 +978,7 @@ const primaryButtonStyle = {
 } as const;
 
 const secondaryButtonStyle = {
-  border: "1px solid #111827",
+  border: "1px solid rgba(15,23,42,0.14)",
   borderRadius: 6,
   background: "#f8fafc",
   color: "#1f2937",
@@ -821,6 +987,17 @@ const secondaryButtonStyle = {
   display: "inline-flex",
   alignItems: "center",
   gap: 8,
+} as const;
+
+const miniIconStyle = {
+  width: 42,
+  height: 42,
+  borderRadius: 14,
+  background: "#e0f2fe",
+  color: "#1351b4",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 } as const;
 
 const chipStyle = {
