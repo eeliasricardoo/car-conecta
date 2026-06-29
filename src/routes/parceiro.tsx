@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import govBrLogo from "@/assets/govbr-logo.svg";
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
 import type { DiagnosticoResult } from "@/lib/services/diagnostico-engine";
 import { DemoPage } from "@/components/car-assistente";
@@ -191,11 +192,12 @@ function ParceirPage() {
 
 function GovBrTopBar({ onLogout }: { onLogout: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
   return (
     <div style={{
       background: "#1351b4", color: "#fff",
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 24px", height: 44, fontSize: 13, position: "sticky", top: 0, zIndex: 200,
+      padding: isMobile ? "0 16px" : "0 24px", height: 44, fontSize: 13, position: "sticky", top: 0, zIndex: 200,
       fontFamily: "Rawline, sans-serif",
     }}>
       {/* Left: gov.br logo + nav links */}
@@ -206,22 +208,24 @@ function GovBrTopBar({ onLogout }: { onLogout: () => void }) {
           style={{ height: 20 }}
           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
         />
-        <span style={{ color: "rgba(255,255,255,0.55)", margin: "0 4px" }}>|</span>
-        {["Institucional", "Acessibilidade", "Comunica BR", "Participe"].map((label) => (
+        {!isMobile && <span style={{ color: "rgba(255,255,255,0.55)", margin: "0 4px" }}>|</span>}
+        {!isMobile && ["Institucional", "Acessibilidade", "Comunica BR", "Participe"].map((label) => (
           <span key={label} style={{ color: "rgba(255,255,255,0.85)", cursor: "pointer", fontSize: 12 }}>{label}</span>
         ))}
       </div>
 
       {/* Right: atalhos + user */}
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          border: "1px solid rgba(255,255,255,0.5)", borderRadius: 4,
-          padding: "3px 10px", cursor: "pointer", fontSize: 12,
-        }}>
-          <i className="fas fa-th" aria-hidden="true" style={{ fontSize: 11 }} />
-          Atalhos gov.br
-        </div>
+        {!isMobile && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            border: "1px solid rgba(255,255,255,0.5)", borderRadius: 4,
+            padding: "3px 10px", cursor: "pointer", fontSize: 12,
+          }}>
+            <i className="fas fa-th" aria-hidden="true" style={{ fontSize: 11 }} />
+            Atalhos gov.br
+          </div>
+        )}
 
         {/* User pill */}
         <div style={{ position: "relative" }}>
@@ -282,6 +286,7 @@ function GovBrScreen({ onAuth }: { onAuth: () => void }) {
   const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
   const [cpfOpen, setCpfOpen] = useState(true);
+  const isMobile = useIsMobile();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -325,16 +330,18 @@ function GovBrScreen({ onAuth }: { onAuth: () => void }) {
       {/* Body */}
       <div style={{ flex: 1, display: "flex" }}>
         {/* Aside — imagem */}
-        <aside style={{ flex: "0 0 57%", overflow: "hidden", display: "flex" }}>
-          <img
-            src="https://sso.acesso.gov.br/assets/govbr/img/conta_govbr_v2_defeso-eleitoral.jpg"
-            alt="Uma conta gov.br garante a identificação de cada cidadão que acessa os serviços digitais públicos."
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
-          />
-        </aside>
+        {!isMobile && (
+          <aside style={{ flex: "0 0 57%", overflow: "hidden", display: "flex" }}>
+            <img
+              src="https://sso.acesso.gov.br/assets/govbr/img/conta_govbr_v2_defeso-eleitoral.jpg"
+              alt="Uma conta gov.br garante a identificação de cada cidadão que acessa os serviços digitais públicos."
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
+            />
+          </aside>
+        )}
 
         {/* Main — form */}
-        <main style={{ flex: "0 0 43%", display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 40px 32px 32px" }}>
+        <main style={{ flex: isMobile ? "1 1 100%" : "0 0 43%", display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? "24px 16px" : "32px 40px 32px 32px" }}>
           <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 380 }}>
             <div style={{ background: "#fff", border: "1px solid #ddd", borderRadius: 4, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
               <h3 style={{ margin: 0, padding: "20px 20px 12px", fontSize: "0.95rem", fontWeight: 700, color: "#1a1a1a" }}>
@@ -363,7 +370,7 @@ function GovBrScreen({ onAuth }: { onAuth: () => void }) {
                   <p style={{ margin: "0 0 12px", fontSize: "0.8rem", color: "#555", lineHeight: 1.55 }}>
                     Digite seu CPF para <strong>criar</strong> ou <strong>acessar</strong> sua conta gov.br
                   </p>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#333", marginBottom: 6 }}>CPF</label>
+                  <label htmlFor="accountId" style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#333", marginBottom: 6 }}>CPF</label>
                   <input
                     id="accountId"
                     type="tel"
@@ -521,10 +528,11 @@ function LoginScreen({ onLogin }: { onLogin: (i: Institution) => void }) {
               <form onSubmit={handleSubmit}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   <div>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
+                    <label htmlFor="partner-institution" style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
                       Instituição
                     </label>
                     <select
+                      id="partner-institution"
                       value={selected}
                       onChange={(e) => setSelected(e.target.value)}
                       style={{
@@ -541,14 +549,16 @@ function LoginScreen({ onLogin }: { onLogin: (i: Institution) => void }) {
                   </div>
 
                   <div>
-                    <label style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
+                    <label htmlFor="partner-access-code" style={{ fontWeight: 600, display: "block", marginBottom: 6, fontSize: "0.875rem", color: "var(--color-secondary-08)" }}>
                       Código de acesso
                     </label>
                     <input
+                      id="partner-access-code"
                       type="text"
                       placeholder="DEMO2026"
                       value={code}
                       onChange={(e) => { setCode(e.target.value); setError(false); }}
+                      aria-invalid={error}
                       style={{
                         width: "100%", padding: "10px 12px", boxSizing: "border-box",
                         border: `1px solid ${error ? "#b71c1c" : "var(--color-secondary-04)"}`,
@@ -556,7 +566,7 @@ function LoginScreen({ onLogin }: { onLogin: (i: Institution) => void }) {
                       }}
                     />
                     {error && (
-                      <p style={{ margin: "6px 0 0", color: "#b71c1c", fontSize: "0.8rem" }}>
+                      <p role="alert" style={{ margin: "6px 0 0", color: "#b71c1c", fontSize: "0.8rem" }}>
                         Código inválido. Use <strong>DEMO2026</strong> para acessar a demonstração.
                       </p>
                     )}
@@ -597,6 +607,7 @@ const PORTAL_TABS: { id: PortalTab; label: string; icon: string }[] = [
 ];
 
 function PortalScreen({ institution, onLogout }: { institution: Institution; onLogout: () => void }) {
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState<PortalTab>("consulta");
   const [cpfInput, setCpfInput] = useState("");
   const [cpfQuery, setCpfQuery] = useState<string | null>(null);
@@ -628,15 +639,15 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
       {/* Portal header */}
       <header className="br-header" style={{ background: "#fff", borderBottom: "1px solid var(--color-secondary-03)", position: "sticky", top: 0, zIndex: 100 }}>
         <div className="container-lg">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 72, gap: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: 72, gap: 16, flexWrap: "wrap", padding: isMobile ? "12px 0" : 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <img src={govBrLogo} alt="Governo Federal" style={{ height: 28 }} />
               <span style={{ borderLeft: "1px solid var(--color-secondary-03)", height: 24, margin: "0 4px" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontWeight: "bold", color: "var(--color-secondary-09)", fontSize: "1rem" }}>CAR</span>
                 <span style={{ fontStyle: "italic", color: "var(--color-primary-default)", fontWeight: "bold", fontSize: "1rem" }}>Proativo</span>
               </div>
-              <span style={{ borderLeft: "1px solid var(--color-secondary-03)", height: 24, margin: "0 4px" }} />
+              {!isMobile && <span style={{ borderLeft: "1px solid var(--color-secondary-03)", height: 24, margin: "0 4px" }} />}
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: "50%",
@@ -659,7 +670,7 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
       {/* Tab bar */}
       <div style={{ background: "#fff", borderBottom: "1px solid var(--color-secondary-03)" }}>
         <div className="container-lg">
-          <div style={{ display: "flex", gap: 0 }}>
+          <div style={{ display: "flex", gap: 0, overflowX: "auto", flexWrap: "nowrap" }}>
             {PORTAL_TABS.map((t) => {
               const active = tab === t.id;
               return (
@@ -670,7 +681,7 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
                   style={{
                     padding: "14px 20px", background: "none", border: "none",
                     borderBottom: active ? "3px solid var(--color-primary-default)" : "3px solid transparent",
-                    cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 8, flexShrink: 0, whiteSpace: "nowrap",
                     fontWeight: active ? 700 : 500,
                     color: active ? "var(--color-primary-default)" : "var(--color-secondary-07)",
                     fontSize: "0.875rem", transition: "all 0.15s",
@@ -726,12 +737,14 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
           <div className="br-card" style={{ marginBottom: 28 }}>
             <div className="card-content">
               <form onSubmit={handleSearch}>
-                <label style={{ fontWeight: 700, display: "block", marginBottom: 8, color: "var(--color-secondary-08)" }}>
+                <label htmlFor="portal-cpf-search" style={{ fontWeight: 700, display: "block", marginBottom: 8, color: "var(--color-secondary-08)" }}>
                   CPF do produtor rural
                 </label>
                 <div style={{ display: "flex", gap: 10 }}>
                   <input
+                    id="portal-cpf-search"
                     type="text"
+                    inputMode="numeric"
                     placeholder="000.000.000-00"
                     value={cpfInput}
                     onChange={(e) => setCpfInput(e.target.value)}
@@ -1117,6 +1130,9 @@ function NotifyModal({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notify-modal-title"
       style={{
         position: "fixed", inset: 0, zIndex: 1000,
         background: "rgba(0,0,0,0.5)",
@@ -1138,7 +1154,7 @@ function NotifyModal({
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "var(--color-secondary-09)" }}>
+            <h3 id="notify-modal-title" style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "var(--color-secondary-09)" }}>
               Notificar produtor
             </h3>
             <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "var(--color-secondary-06)" }}>
@@ -1208,10 +1224,11 @@ function NotifyModal({
 
               {/* Recipient input */}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-secondary-07)", marginBottom: 8 }}>
+                <label htmlFor="notify-recipient" style={{ display: "block", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--color-secondary-07)", marginBottom: 8 }}>
                   {recipientLabel}
                 </label>
                 <input
+                  id="notify-recipient"
                   type={recipientType}
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}

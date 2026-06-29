@@ -217,6 +217,7 @@ function LocalizacaoPage() {
                       value={payload}
                       onChange={(event) => setPayload(event.target.value)}
                       spellCheck={false}
+                      aria-label="Payload JSON da consulta por localização"
                       style={{
                         width: "100%",
                         minHeight: 430,

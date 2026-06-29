@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import govBrLogo from "@/assets/govbr-logo.svg";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
 import type { DiagnosticoResult } from "@/lib/services/diagnostico-engine";
 import { fetchSicarByCodigo, type SicarRecord } from "@/lib/services/sicar";
@@ -587,6 +588,29 @@ function ProfileCard({
 function FarmerHub({ onBack }: { onBack: () => void }) {
   const [panel, setPanel] = useState<FarmerPanel>(null);
 
+  function openPanel(next: FarmerPanel) {
+    setPanel(next);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  if (panel) {
+    return (
+      <main style={{ padding: "40px 0 88px", background: "var(--color-secondary-01)" }}>
+        <div className="container-lg">
+          <button type="button" onClick={() => openPanel(null)} style={backLinkStyle}>
+            <i className="fas fa-arrow-left" aria-hidden="true" />
+            Voltar às soluções
+          </button>
+          {panel === "cpf" && <CpfStatusPanel />}
+          {panel === "localizacao" && <LocationPanel />}
+          {panel === "car" && <CarNumberPanel />}
+          {panel === "mapa" && <MapPanel audience="agricultor" />}
+          {panel === "novo" && <NewCarPanel />}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main style={{ padding: "56px 0 88px", background: "var(--color-secondary-01)" }}>
       <div className="container-lg">
@@ -615,7 +639,7 @@ function FarmerHub({ onBack }: { onBack: () => void }) {
           </p>
         </section>
 
-        <section style={{ marginBottom: 32 }}>
+        <section>
           <div style={actionGridStyle}>
             {FARMER_ACTIONS.map((action) => (
               <HubActionCard
@@ -625,20 +649,9 @@ function FarmerHub({ onBack }: { onBack: () => void }) {
                 icon={action.icon}
                 variant={action.variant}
                 active={panel === action.panel}
-                onClick={() => setPanel(action.panel)}
+                onClick={() => openPanel(action.panel)}
               />
             ))}
-          </div>
-        </section>
-
-        <section>
-          <div>
-            {!panel && <EmptyFarmerState />}
-            {panel === "cpf" && <CpfStatusPanel />}
-            {panel === "localizacao" && <LocationPanel />}
-            {panel === "car" && <CarNumberPanel />}
-            {panel === "mapa" && <MapPanel audience="agricultor" />}
-            {panel === "novo" && <NewCarPanel />}
           </div>
         </section>
       </div>
@@ -716,25 +729,6 @@ function HubActionCard({
   );
 }
 
-function EmptyFarmerState() {
-  return (
-    <div className="br-message info" role="status" style={{ marginBottom: 0, maxWidth: 920 }}>
-      <div className="icon">
-        <i className="fas fa-info-circle" aria-hidden="true" />
-      </div>
-      <div className="content">
-        <span className="message-title" style={{ display: "block", marginBottom: 4 }}>
-          Escolha uma solução acima.
-        </span>
-        <span className="message-body" style={{ display: "block" }}>
-          O hub mostra quais consultas exigem autenticação Gov.br e quais usam dados públicos
-          regionais.
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function CpfStatusPanel() {
   const [cpf, setCpf] = useState("107.282.101-00");
   const [submittedCpf, setSubmittedCpf] = useState<string | null>(null);
@@ -757,6 +751,9 @@ function CpfStatusPanel() {
           onChange={(event) => setCpf(event.target.value)}
           style={inputStyle}
           placeholder="Digite o CPF"
+          aria-label="CPF para consulta"
+          inputMode="numeric"
+          autoComplete="off"
         />
         <button type="submit" style={primaryButtonStyle} disabled={isFetching}>
           {isFetching ? "Consultando..." : "Consultar CPF"}
@@ -770,7 +767,9 @@ function CpfStatusPanel() {
         ))}
       </div>
       {error && (
-        <p style={{ ...mutedTextStyle, color: "#b71c1c" }}>CPF inválido ou não encontrado.</p>
+        <p style={{ ...mutedTextStyle, color: "#b71c1c" }} role="alert">
+          CPF inválido ou não encontrado.
+        </p>
       )}
       {data && <DiagnosticSummary data={data} />}
     </div>
@@ -879,6 +878,7 @@ function PartnerDiagnosticCard({
   onNotify: () => void;
 }) {
   const [reportOpen, setReportOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   if (!data.sicar) {
     return (
@@ -966,7 +966,9 @@ function PartnerDiagnosticCard({
         style={{
           padding: 20,
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1.15fr) minmax(220px, 0.85fr) minmax(220px, 0.7fr)",
+          gridTemplateColumns: isMobile
+            ? "1fr"
+            : "minmax(0, 1.15fr) minmax(220px, 0.85fr) minmax(220px, 0.7fr)",
           gap: 24,
           alignItems: "start",
         }}
@@ -1159,14 +1161,15 @@ function ResultSummaryCard({
       style={{
         borderRadius: 8,
         marginTop: 18,
+        padding: 24,
         borderLeft: "4px solid var(--color-success-default, #168821)",
       }}
     >
-      <span className="br-tag success" style={{ marginBottom: 10 }}>
+      <span className="br-tag success" style={{ display: "inline-flex" }}>
         Resultado encontrado
       </span>
-      <h3 style={{ margin: "0 0 8px", fontSize: 20 }}>{title}</h3>
-      <p style={{ ...mutedTextStyle, maxWidth: 760 }}>{body}</p>
+      <h3 style={{ margin: "14px 0 8px", fontSize: 20 }}>{title}</h3>
+      <p style={{ ...mutedTextStyle, maxWidth: 760, marginTop: 0 }}>{body}</p>
       <div
         style={{
           display: "grid",
@@ -1255,11 +1258,22 @@ function ReportModal({
       };
   const steps = record ? getResolutionSteps({ sicar: record } as DiagnosticoResult) : [];
 
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="report-modal-title"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
       style={{
         position: "fixed",
         inset: 0,
@@ -1560,13 +1574,22 @@ function CarNumberPanel() {
       <strong>Número do CAR</strong>
       <p style={mutedTextStyle}>Busque um CAR demonstrativo pelo código do imóvel.</p>
       <form onSubmit={submit} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <input value={code} onChange={(event) => setCode(event.target.value)} style={inputStyle} />
+        <input
+          value={code}
+          onChange={(event) => setCode(event.target.value)}
+          style={inputStyle}
+          aria-label="Código do CAR"
+          placeholder="UF-0000000-XXXX"
+          autoComplete="off"
+        />
         <button type="submit" style={primaryButtonStyle}>
           Buscar CAR
         </button>
       </form>
       {record === null && (
-        <p style={mutedTextStyle}>Código não encontrado nos registros demonstrativos.</p>
+        <p style={mutedTextStyle} role="alert">
+          Código não encontrado nos registros demonstrativos.
+        </p>
       )}
       {record && (
         <ResultSummaryCard
@@ -1803,9 +1826,15 @@ function PartnerFlow({ onBack }: { onBack: () => void }) {
                 setError(false);
               }}
               placeholder="DEMO2026"
+              aria-invalid={error}
+              aria-describedby="partner-code-hint"
               style={{ ...inputStyle, borderColor: error ? "#b71c1c" : "#d1d5db" }}
             />
-            <span style={{ color: error ? "#b71c1c" : "#6b7280", fontSize: 13 }}>
+            <span
+              id="partner-code-hint"
+              role={error ? "alert" : undefined}
+              style={{ color: error ? "#b71c1c" : "#6b7280", fontSize: 13 }}
+            >
               {error
                 ? "Código inválido. Use DEMO2026."
                 : "Demonstração: deixe em branco ou use DEMO2026"}
@@ -1832,6 +1861,7 @@ function PartnerDashboard({ institution, onBack }: { institution: string; onBack
   const [widgetName, setWidgetName] = useState("Crédito Rural");
   const [widgetPosition, setWidgetPosition] = useState("bottom-right");
   const { data, isFetching, error } = useDiagnostico(submittedCpf);
+  const isMobile = useIsMobile();
   const accountName = institution.includes("EMATER") ? "EMATER MG" : institution;
 
   function search(event: FormEvent<HTMLFormElement>) {
@@ -1970,7 +2000,7 @@ function PartnerDashboard({ institution, onBack }: { institution: string; onBack
                 onSubmit={search}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) auto auto",
+                  gridTemplateColumns: isMobile ? "1fr auto" : "minmax(0, 1fr) auto auto",
                   gap: 12,
                   alignItems: "end",
                   marginTop: 24,
