@@ -2187,6 +2187,13 @@ function WidgetBuilderTab({
               boxShadow: "0 16px 36px rgba(22,136,33,0.28)",
               fontWeight: 900,
               lineHeight: 1.05,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 4,
+              padding: 0,
+              textAlign: "center",
             }}
           >
             <i
@@ -2196,10 +2203,16 @@ function WidgetBuilderTab({
                 display: "block",
                 color: "#ffea00",
                 fontSize: 20,
-                marginBottom: 4,
+                lineHeight: 1,
               }}
             />
-            {widgetName}
+            <span style={{ display: "block", maxWidth: 70 }}>
+              {widgetName.split(" ").map((word) => (
+                <span key={word} style={{ display: "block" }}>
+                  {word}
+                </span>
+              ))}
+            </span>
           </button>
         </div>
       </div>
