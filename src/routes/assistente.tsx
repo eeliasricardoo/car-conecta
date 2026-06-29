@@ -40,6 +40,39 @@ const DEMO_CPFS = [
   { cpf: "111.222.333-96", label: "Regular" },
 ];
 
+const PARTNER_DEMO_SCENARIOS = [
+  {
+    cpf: "107.282.101-00",
+    label: "Documentação pendente",
+    hint: "CCIR vencido + comprovante de domínio",
+  },
+  {
+    cpf: "287.016.154-91",
+    label: "Sobreposição ambiental",
+    hint: "APP + Reserva Legal",
+  },
+  {
+    cpf: "321.654.987-91",
+    label: "CAR cancelado",
+    hint: "Reativação junto ao órgão estadual",
+  },
+  {
+    cpf: "555.666.777-20",
+    label: "Área divergente",
+    hint: "Retificação georreferenciada",
+  },
+  {
+    cpf: "111.222.333-96",
+    label: "Cadastro regular",
+    hint: "Nenhuma ação recomendada",
+  },
+  {
+    cpf: "448.903.217-05",
+    label: "Múltiplas pendências",
+    hint: "Documentação + visita técnica",
+  },
+];
+
 const INSTITUTIONS = [
   "EMATER (Empresa de Assistência Técnica e Extensão Rural) — Mato Grosso",
   "Sicredi RS",
@@ -111,6 +144,47 @@ const DEMO_REPORT = {
   area: "68,47 ha",
   modulos: "1,71",
   status: "Ativo",
+};
+
+const STATUS_PRESENTATION: Record<
+  SicarRecord["status"],
+  { bg: string; text: string; border: string; label: string; icon: string }
+> = {
+  regular: {
+    bg: "#e8f5e9",
+    text: "#168821",
+    border: "#a5d6a7",
+    label: "REGULAR",
+    icon: "fa-check-circle",
+  },
+  pendente: {
+    bg: "#fff8e1",
+    text: "#e65100",
+    border: "#ffcc80",
+    label: "PENDENTE",
+    icon: "fa-exclamation-triangle",
+  },
+  sobreposicao: {
+    bg: "#fce4ec",
+    text: "#b71c1c",
+    border: "#ef9a9a",
+    label: "SOBREPOSIÇÃO",
+    icon: "fa-exclamation-triangle",
+  },
+  cancelado: {
+    bg: "#eeeeee",
+    text: "#616161",
+    border: "#bdbdbd",
+    label: "CANCELADO",
+    icon: "fa-ban",
+  },
+  nao_encontrado: {
+    bg: "#f5f5f5",
+    text: "#757575",
+    border: "#e0e0e0",
+    label: "NÃO ENCONTRADO",
+    icon: "fa-search",
+  },
 };
 
 function AssistentePage() {
@@ -619,6 +693,352 @@ function DiagnosticSummary({ data }: { data: DiagnosticoResult }) {
       body={`O imóvel está em ${data.sicar.nome_municipio}/${data.sicar.uf}. O status atual é ${formatStatus(data.sicar.status)} e o nível de atenção é ${data.nivel_risco}.`}
       record={data.sicar}
     />
+  );
+}
+
+type ResolutionStep = {
+  label: string;
+  module: string;
+  description: string;
+  icon: string;
+  color: string;
+};
+
+function getResolutionSteps(data: DiagnosticoResult): ResolutionStep[] {
+  const record = data.sicar;
+  if (!record) return [];
+
+  const pendencias = record.pendencias.map((item) => item.toLowerCase());
+  const steps: ResolutionStep[] = [];
+
+  if (record.status === "cancelado") {
+    steps.push({
+      label: "Reativação junto ao órgão estadual",
+      module: "Central do SICAR",
+      description:
+        "O CAR cancelado precisa de solicitação formal de reativação, com documentação de domínio atualizada.",
+      icon: "fa-redo",
+      color: "#616161",
+    });
+  }
+
+  if (pendencias.some((item) => /ccir|domínio|documento|comprovante/.test(item))) {
+    steps.push({
+      label: "Etapa 1 — Documentação",
+      module: "Módulo de Cadastro SICAR",
+      description:
+        "O produtor atualiza dados de domínio e documentação. É uma etapa que pode ser conduzida digitalmente.",
+      icon: "fa-file-alt",
+      color: "#e65100",
+    });
+  }
+
+  if (pendencias.some((item) => /área|módulo|polígono|diverge/.test(item))) {
+    steps.push({
+      label: "Etapa — Retificação geo",
+      module: "Módulo de Cadastro SICAR",
+      description:
+        "Divergências de área ou polígono pedem correção georreferenciada antes de reenviar o arquivo .CAR.",
+      icon: "fa-map-marked-alt",
+      color: "#1351b4",
+    });
+  }
+
+  if (pendencias.some((item) => /app|preservação|sobreposição|reserva legal/.test(item))) {
+    steps.push({
+      label: "Etapa — Análise técnica presencial",
+      module: "EMATER / órgão ambiental",
+      description:
+        "Sobreposição com APP ou Reserva Legal exige análise técnica. A EMATER recebe o diagnóstico preparado.",
+      icon: "fa-user-tie",
+      color: "#b71c1c",
+    });
+  }
+
+  if (record.status !== "regular" && steps.length === 0) {
+    steps.push({
+      label: "Retificação no módulo de cadastro",
+      module: "Módulo de Cadastro SICAR",
+      description:
+        "O produtor corrige os campos pendentes e reenvia o arquivo .CAR para nova análise.",
+      icon: "fa-edit",
+      color: "#e65100",
+    });
+  }
+
+  return steps;
+}
+
+function PartnerDiagnosticCard({
+  data,
+  copied,
+  notified,
+  onCopy,
+  onNotify,
+}: {
+  data: DiagnosticoResult;
+  copied: boolean;
+  notified: boolean;
+  onCopy: (link: string) => void;
+  onNotify: () => void;
+}) {
+  const [reportOpen, setReportOpen] = useState(false);
+
+  if (!data.sicar) {
+    return (
+      <div className="br-message warning" role="status" style={{ marginTop: 24 }}>
+        <div className="icon">
+          <i className="fas fa-search" aria-hidden="true" />
+        </div>
+        <div className="content">
+          <span className="message-title">CPF não encontrado na base demonstrativa.</span>
+          <span className="message-body">
+            Use o seletor de desenvolvimento para carregar um cenário de atendimento.
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const record = data.sicar;
+  const status = STATUS_PRESENTATION[record.status] ?? STATUS_PRESENTATION.pendente;
+  const steps = getResolutionSteps(data);
+  const digitalCount = steps.filter(
+    (step) => step.icon !== "fa-user-tie" && step.icon !== "fa-redo",
+  ).length;
+  const technicalCount = steps.filter((step) => step.icon === "fa-user-tie").length;
+  const isIrregular = record.status !== "regular";
+
+  return (
+    <div
+      className="br-card"
+      style={{
+        marginTop: 28,
+        borderRadius: 8,
+        border: `1.5px solid ${status.border}`,
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ background: status.bg, padding: "18px 20px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 14,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <i
+              className={`fas ${status.icon}`}
+              style={{ color: status.text, fontSize: 22, marginTop: 4 }}
+              aria-hidden="true"
+            />
+            <div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    background: status.text,
+                    color: "#fff",
+                    borderRadius: 4,
+                    padding: "3px 8px",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {status.label}
+                </span>
+                {!record.dado_real && (
+                  <span style={{ color: "var(--color-secondary-06)", fontSize: 12 }}>demo</span>
+                )}
+              </div>
+              <h3 style={{ margin: "8px 0 4px", fontSize: 22 }}>{record.nome_imovel}</h3>
+              <p style={{ margin: 0, color: "var(--color-secondary-07)" }}>
+                {record.nome_municipio} — {record.uf} · {record.area_ha} ha
+              </p>
+            </div>
+          </div>
+          <code style={{ color: "var(--color-secondary-06)", fontSize: 12 }}>
+            {record.codigo_car}
+          </code>
+        </div>
+      </div>
+
+      <div
+        style={{
+          padding: 20,
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.15fr) minmax(220px, 0.85fr) minmax(220px, 0.7fr)",
+          gap: 24,
+          alignItems: "start",
+        }}
+      >
+        <section>
+          <p style={sectionEyebrowStyle}>Diagnóstico</p>
+          <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <i
+              className={`fas ${record.status === "regular" ? "fa-check-circle" : "fa-times-circle"}`}
+              style={{ color: status.text, marginTop: 4 }}
+              aria-hidden="true"
+            />
+            <strong style={{ color: status.text }}>
+              {data.acao_recomendada ?? "Nenhuma ação necessária."}
+            </strong>
+          </div>
+
+          {record.pendencias.length > 0 && (
+            <div style={{ marginTop: 18 }}>
+              <p style={sectionEyebrowStyle}>Pendências</p>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
+                {record.pendencias.map((pendencia) => (
+                  <li
+                    key={pendencia}
+                    style={{ display: "flex", gap: 8, color: "var(--color-secondary-07)" }}
+                  >
+                    <i
+                      className="fas fa-circle"
+                      style={{ color: "#e65100", fontSize: 7, marginTop: 8 }}
+                      aria-hidden="true"
+                    />
+                    {pendencia}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {steps.length > 0 && (
+            <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <span style={pathBadgeStyle}>{steps.length} caminhos de resolução</span>
+                {digitalCount > 0 && (
+                  <span style={{ ...pathBadgeStyle, background: "#168821" }}>
+                    {digitalCount} resolve pelo celular
+                  </span>
+                )}
+                {technicalCount > 0 && (
+                  <span style={{ ...pathBadgeStyle, background: "#b71c1c" }}>
+                    {technicalCount} requer visita técnica
+                  </span>
+                )}
+              </div>
+              {steps.map((step) => (
+                <div
+                  key={step.label}
+                  style={{
+                    border: `1px solid ${step.color}30`,
+                    background: `${step.color}09`,
+                    borderRadius: 8,
+                    padding: 14,
+                    display: "flex",
+                    gap: 12,
+                  }}
+                >
+                  <i
+                    className={`fas ${step.icon}`}
+                    style={{ color: step.color, marginTop: 3 }}
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <strong
+                      style={{
+                        display: "block",
+                        color: step.color,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        fontSize: 12,
+                      }}
+                    >
+                      {step.label}
+                    </strong>
+                    <span style={{ color: "var(--color-secondary-06)", fontSize: 12 }}>
+                      {step.module}
+                    </span>
+                    <p style={{ ...mutedTextStyle, marginBottom: 0 }}>{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <p style={sectionEyebrowStyle}>Fontes cruzadas</p>
+          <div style={{ display: "grid", gap: 9 }}>
+            {data.fontes.map((fonte) => (
+              <div key={fonte.nome} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <i
+                  className={`fas ${
+                    fonte.status === "ok"
+                      ? "fa-check"
+                      : fonte.status === "alerta"
+                        ? "fa-exclamation"
+                        : "fa-minus"
+                  }`}
+                  style={{
+                    color:
+                      fonte.status === "ok"
+                        ? "var(--color-success-default, #168821)"
+                        : fonte.status === "alerta"
+                          ? "#e65100"
+                          : "var(--color-secondary-05)",
+                    width: 14,
+                    textAlign: "center",
+                  }}
+                  aria-hidden="true"
+                />
+                <span style={{ color: "var(--color-secondary-07)" }}>
+                  {fonte.nome}
+                  {!fonte.dado_real && (
+                    <span style={{ color: "var(--color-secondary-05)", fontStyle: "italic" }}>
+                      {" "}
+                      · demo
+                    </span>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <p style={sectionEyebrowStyle}>Ação recomendada</p>
+          <div style={{ display: "grid", gap: 10 }}>
+            <button type="button" className="br-button primary" onClick={() => setReportOpen(true)}>
+              Ver demonstrativo completo
+            </button>
+            {isIrregular && data.link_resolucao && (
+              <button
+                type="button"
+                className="br-button secondary"
+                onClick={() => onCopy(data.link_resolucao!)}
+              >
+                <i className={`fas ${copied ? "fa-check" : "fa-copy"}`} aria-hidden="true" />
+                {copied ? "Link copiado" : "Copiar link"}
+              </button>
+            )}
+            {isIrregular && (
+              <button
+                type="button"
+                className="br-button secondary"
+                onClick={onNotify}
+                disabled={notified}
+              >
+                <i
+                  className={`fas ${notified ? "fa-check" : "fa-paper-plane"}`}
+                  aria-hidden="true"
+                />
+                {notified ? "Notificado" : "Notificar produtor"}
+              </button>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {reportOpen && <ReportModal record={record} onClose={() => setReportOpen(false)} />}
+    </div>
   );
 }
 
@@ -1242,14 +1662,20 @@ function PartnerDashboard({ institution }: { institution: string }) {
   const [activeTab, setActiveTab] = useState<"atendimento" | "widget">("atendimento");
   const [cpf, setCpf] = useState("107.282.101-00");
   const [submittedCpf, setSubmittedCpf] = useState<string | null>(null);
+  const [showDevPicker, setShowDevPicker] = useState(false);
+  const [copiedResolution, setCopiedResolution] = useState(false);
+  const [notifiedProducer, setNotifiedProducer] = useState(false);
   const [copiedWidget, setCopiedWidget] = useState(false);
   const [widgetName, setWidgetName] = useState("Crédito Rural");
   const [widgetPosition, setWidgetPosition] = useState("bottom-right");
-  const { data, isFetching } = useDiagnostico(submittedCpf);
+  const { data, isFetching, error } = useDiagnostico(submittedCpf);
   const accountName = institution.includes("EMATER") ? "EMATER MG" : institution;
 
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setShowDevPicker(false);
+    setCopiedResolution(false);
+    setNotifiedProducer(false);
     setSubmittedCpf(cpf);
   }
 
@@ -1267,6 +1693,20 @@ function PartnerDashboard({ institution }: { institution: string }) {
     void navigator.clipboard?.writeText(widgetSnippet);
     setCopiedWidget(true);
     window.setTimeout(() => setCopiedWidget(false), 1800);
+  }
+
+  function chooseDemoScenario(cpfValue: string) {
+    setCpf(cpfValue);
+    setSubmittedCpf(null);
+    setShowDevPicker(false);
+    setCopiedResolution(false);
+    setNotifiedProducer(false);
+  }
+
+  function copyResolutionLink(link: string) {
+    void navigator.clipboard?.writeText(link);
+    setCopiedResolution(true);
+    window.setTimeout(() => setCopiedResolution(false), 1800);
   }
 
   return (
@@ -1363,11 +1803,11 @@ function PartnerDashboard({ institution }: { institution: string }) {
                 onSubmit={search}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) auto",
+                  gridTemplateColumns: "minmax(0, 1fr) auto auto",
                   gap: 12,
                   alignItems: "end",
-                  marginTop: 18,
-                  maxWidth: 640,
+                  marginTop: 24,
+                  maxWidth: 760,
                 }}
               >
                 <div className="br-input">
@@ -1382,8 +1822,90 @@ function PartnerDashboard({ institution }: { institution: string }) {
                 <button type="submit" className="br-button primary" style={{ minHeight: 40 }}>
                   {isFetching ? "Buscando..." : "Buscar CPF"}
                 </button>
+                <div style={{ position: "relative" }}>
+                  <button
+                    type="button"
+                    className="br-button secondary circle"
+                    onClick={() => setShowDevPicker((value) => !value)}
+                    aria-label="Selecionar cenário de demonstração"
+                    title="Selecionar cenário demo"
+                  >
+                    <i className="fas fa-code" aria-hidden="true" />
+                  </button>
+                  {showDevPicker && (
+                    <div
+                      className="br-card"
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        top: "calc(100% + 8px)",
+                        width: 330,
+                        zIndex: 20,
+                        borderRadius: 8,
+                        padding: 14,
+                        boxShadow: "0 16px 36px rgba(15,23,42,0.18)",
+                      }}
+                    >
+                      <label
+                        htmlFor="partner-demo-scenario"
+                        style={{
+                          display: "block",
+                          fontWeight: 800,
+                          marginBottom: 8,
+                          color: "var(--color-secondary-08)",
+                        }}
+                      >
+                        Cenário de demonstração
+                      </label>
+                      <select
+                        id="partner-demo-scenario"
+                        className="br-input"
+                        value={cpf}
+                        onChange={(event) => chooseDemoScenario(event.target.value)}
+                        style={{
+                          width: "100%",
+                          minHeight: 40,
+                          border: "1px solid var(--color-secondary-04)",
+                          borderRadius: 6,
+                          padding: "8px 10px",
+                          background: "#fff",
+                        }}
+                      >
+                        {PARTNER_DEMO_SCENARIOS.map((scenario) => (
+                          <option key={scenario.cpf} value={scenario.cpf}>
+                            {scenario.label} — {scenario.hint}
+                          </option>
+                        ))}
+                      </select>
+                      <p style={{ ...mutedTextStyle, fontSize: 13, marginBottom: 0 }}>
+                        O CPF fica oculto na seleção para manter a demonstração limpa.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </form>
-              {data && <DiagnosticSummary data={data} />}
+              {error && (
+                <div className="br-message danger" role="status" style={{ marginTop: 20 }}>
+                  <div className="icon">
+                    <i className="fas fa-times-circle" aria-hidden="true" />
+                  </div>
+                  <div className="content">
+                    <span className="message-title">Não foi possível consultar este CPF.</span>
+                    <span className="message-body">
+                      Verifique os 11 dígitos ou selecione um cenário pelo botão de desenvolvimento.
+                    </span>
+                  </div>
+                </div>
+              )}
+              {data && !isFetching && (
+                <PartnerDiagnosticCard
+                  data={data}
+                  copied={copiedResolution}
+                  notified={notifiedProducer}
+                  onCopy={copyResolutionLink}
+                  onNotify={() => setNotifiedProducer(true)}
+                />
+              )}
             </div>
             <section>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -1670,6 +2192,24 @@ const mutedTextStyle = {
   color: "#6b7280",
   lineHeight: 1.6,
   margin: "8px 0",
+} as const;
+
+const sectionEyebrowStyle = {
+  fontWeight: 800,
+  fontSize: 12,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  color: "var(--color-secondary-07)",
+  margin: "0 0 12px",
+} as const;
+
+const pathBadgeStyle = {
+  fontSize: 12,
+  fontWeight: 800,
+  background: "#e65100",
+  color: "#fff",
+  borderRadius: 4,
+  padding: "3px 8px",
 } as const;
 
 const govLoginBadgeStyle = {
