@@ -309,7 +309,10 @@ function GovBrScreen({ onAuth }: { onAuth: () => void }) {
             (e.target as HTMLImageElement).insertAdjacentHTML("afterend", '<span style="font-weight:800;font-size:1.3rem"><span style="color:#1351B4">g</span><span style="color:#168821">o</span><span style="color:#1351B4">v</span><span style="color:#FFCD07">.</span><span style="color:#1351B4">b</span><span style="color:#168821">r</span></span>');
           }}
         />
-        <div style={{ display: "flex", gap: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "#333", textDecoration: "none" }}>
+            <i className="fas fa-arrow-left" aria-hidden="true" /> Voltar
+          </Link>
           <a href="#" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem", color: "#333", textDecoration: "none" }}>
             <i className="fas fa-adjust" aria-hidden="true" /> Alto Contraste
           </a>

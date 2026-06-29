@@ -200,8 +200,8 @@ export function AssistentePage() {
     >
       <GovHeader onHome={() => setProfile(null)} />
       {!profile && <ProfileChooser onChoose={setProfile} />}
-      {profile === "agricultor" && <FarmerHub />}
-      {profile === "parceiro" && <PartnerFlow />}
+      {profile === "agricultor" && <FarmerHub onBack={() => setProfile(null)} />}
+      {profile === "parceiro" && <PartnerFlow onBack={() => setProfile(null)} />}
       <AssistantFooter />
       <DoubtChat />
     </div>
@@ -584,12 +584,16 @@ function ProfileCard({
   );
 }
 
-function FarmerHub() {
+function FarmerHub({ onBack }: { onBack: () => void }) {
   const [panel, setPanel] = useState<FarmerPanel>(null);
 
   return (
     <main style={{ padding: "56px 0 88px", background: "var(--color-secondary-01)" }}>
       <div className="container-lg">
+        <button type="button" onClick={onBack} style={backLinkStyle}>
+          <i className="fas fa-arrow-left" aria-hidden="true" />
+          Trocar perfil
+        </button>
         <section style={{ maxWidth: 900, marginBottom: 36 }}>
           <span className="br-tag success" style={{ fontWeight: 700, marginBottom: 12 }}>
             Experiência do agricultor
@@ -1738,7 +1742,7 @@ function NewCarPanel() {
   );
 }
 
-function PartnerFlow() {
+function PartnerFlow({ onBack }: { onBack: () => void }) {
   const [logged, setLogged] = useState(false);
   const [institution, setInstitution] = useState(INSTITUTIONS[0]);
   const [code, setCode] = useState("");
@@ -1753,11 +1757,16 @@ function PartnerFlow() {
     setLogged(true);
   }
 
-  if (logged) return <PartnerDashboard institution={institution} />;
+  if (logged)
+    return <PartnerDashboard institution={institution} onBack={() => setLogged(false)} />;
 
   return (
     <main className="container-lg" style={{ padding: "56px 16px 88px" }}>
       <div style={{ width: "100%", maxWidth: 560, margin: "0 auto" }}>
+        <button type="button" onClick={onBack} style={backLinkStyle}>
+          <i className="fas fa-arrow-left" aria-hidden="true" />
+          Trocar perfil
+        </button>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={partnerIconStyle}>
             <i className="fas fa-handshake" aria-hidden="true" />
@@ -1812,7 +1821,7 @@ function PartnerFlow() {
   );
 }
 
-function PartnerDashboard({ institution }: { institution: string }) {
+function PartnerDashboard({ institution, onBack }: { institution: string; onBack: () => void }) {
   const [activeTab, setActiveTab] = useState<"atendimento" | "widget">("atendimento");
   const [cpf, setCpf] = useState("107.282.101-00");
   const [submittedCpf, setSubmittedCpf] = useState<string | null>(null);
@@ -1871,6 +1880,10 @@ function PartnerDashboard({ institution }: { institution: string }) {
       }}
     >
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <button type="button" onClick={onBack} style={backLinkStyle}>
+          <i className="fas fa-arrow-left" aria-hidden="true" />
+          Sair do portal
+        </button>
         <section style={{ marginBottom: 40 }}>
           <span className="br-tag success" style={{ fontWeight: 700 }}>
             Conta parceira ativa
@@ -2359,6 +2372,21 @@ const mutedTextStyle = {
   color: "#6b7280",
   lineHeight: 1.6,
   margin: "8px 0",
+} as const;
+
+const backLinkStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
+  marginBottom: 24,
+  padding: "8px 16px",
+  border: "1px solid var(--color-secondary-04)",
+  borderRadius: 999,
+  background: "#fff",
+  color: "var(--color-primary-default, #1351b4)",
+  fontWeight: 600,
+  fontSize: 14,
+  cursor: "pointer",
 } as const;
 
 const sectionEyebrowStyle = {
