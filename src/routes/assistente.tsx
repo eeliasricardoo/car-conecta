@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import govBrLogo from "@/assets/govbr-logo.svg";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
@@ -187,7 +187,7 @@ const STATUS_PRESENTATION: Record<
   },
 };
 
-function AssistentePage() {
+export function AssistentePage() {
   const [profile, setProfile] = useState<Profile>(null);
 
   return (
@@ -202,8 +202,100 @@ function AssistentePage() {
       {!profile && <ProfileChooser onChoose={setProfile} />}
       {profile === "agricultor" && <FarmerHub />}
       {profile === "parceiro" && <PartnerFlow />}
+      <AssistantFooter />
       <DoubtChat />
     </div>
+  );
+}
+
+function AssistantFooter() {
+  const links = [
+    {
+      to: "/demo",
+      icon: "fa-comments",
+      title: "Simulador WhatsApp e Widget",
+      description: "Veja a conversa do CAR Proativo em canais replicáveis.",
+    },
+    {
+      to: "/localizacao",
+      icon: "fa-location-arrow",
+      title: "Consulta por Localização",
+      description: "Teste o cruzamento de coordenadas com município e dados públicos.",
+    },
+    {
+      to: "/wiki",
+      icon: "fa-book-open",
+      title: "Documentação Visual",
+      description: "Entenda arquitetura, tokens, integrações e próximos passos.",
+    },
+  ] as const;
+
+  return (
+    <footer
+      style={{
+        background: "#fff",
+        borderTop: "1px solid var(--color-secondary-03)",
+        padding: "32px 16px",
+      }}
+    >
+      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 24,
+            flexWrap: "wrap",
+            marginBottom: 18,
+          }}
+        >
+          <div>
+            <strong style={{ color: "var(--color-secondary-09)", fontSize: 18 }}>
+              CAR Proativo
+            </strong>
+            <p style={{ ...mutedTextStyle, marginBottom: 0 }}>
+              Acesse os materiais de demonstração e documentação da solução.
+            </p>
+          </div>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
+            gap: 16,
+          }}
+        >
+          {links.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              style={{
+                display: "flex",
+                gap: 12,
+                alignItems: "flex-start",
+                color: "inherit",
+                textDecoration: "none",
+                borderTop: "3px solid var(--color-primary-default, #1351b4)",
+                paddingTop: 14,
+              }}
+            >
+              <i
+                className={`fas ${item.icon}`}
+                style={{ color: "var(--color-primary-default, #1351b4)", marginTop: 3 }}
+                aria-hidden="true"
+              />
+              <span>
+                <strong style={{ display: "block", color: "var(--color-secondary-09)" }}>
+                  {item.title}
+                </strong>
+                <span style={{ color: "var(--color-secondary-07)", fontSize: 14 }}>
+                  {item.description}
+                </span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </footer>
   );
 }
 
