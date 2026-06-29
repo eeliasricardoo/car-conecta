@@ -1138,6 +1138,7 @@ function ReportModal({
   const report = record
     ? {
         codigo: record.codigo_car,
+        nome: record.nome_imovel,
         municipio: record.nome_municipio,
         uf: record.uf,
         dataInscricao: formatDate(record.data_inscricao),
@@ -1148,8 +1149,15 @@ function ReportModal({
         modulos: "Consulte o demonstrativo",
         status: formatStatus(record.status),
       }
-    : DEMO_REPORT;
+    : { ...DEMO_REPORT, nome: "Imóvel rural demonstrativo" };
   const municipio = location?.municipio_localizacao;
+  const status = record
+    ? (STATUS_PRESENTATION[record.status] ?? STATUS_PRESENTATION.pendente)
+    : {
+        ...STATUS_PRESENTATION.regular,
+        label: DEMO_REPORT.status.toUpperCase(),
+      };
+  const steps = record ? getResolutionSteps({ sicar: record } as DiagnosticoResult) : [];
 
   return (
     <div
@@ -1189,8 +1197,11 @@ function ReportModal({
           <div>
             <span className="br-tag info">Demonstrativo do CAR</span>
             <h2 id="report-modal-title" style={{ margin: "12px 0 0", fontSize: 26 }}>
-              Entenda o imóvel sem linguagem complicada
+              {report.nome}
             </h2>
+            <p style={{ ...mutedTextStyle, marginBottom: 0 }}>
+              {report.municipio}/{report.uf} · {report.codigo}
+            </p>
           </div>
           <button
             type="button"
@@ -1202,15 +1213,28 @@ function ReportModal({
           </button>
         </div>
         <div style={{ padding: 24 }}>
-          <div className="br-message success" role="status">
+          <div
+            className="br-message"
+            role="status"
+            style={{
+              borderLeft: `6px solid ${status.text}`,
+              background: status.bg,
+            }}
+          >
             <div className="icon">
-              <i className="fas fa-check-circle" aria-hidden="true" />
+              <i
+                className={`fas ${status.icon}`}
+                style={{ color: status.text }}
+                aria-hidden="true"
+              />
             </div>
             <div className="content">
-              <span className="message-title">O CAR foi encontrado.</span>
+              <span className="message-title">
+                Situação do cenário: <strong style={{ color: status.text }}>{status.label}</strong>
+              </span>
               <span className="message-body">
-                Mostramos abaixo os dados principais em linguagem simples. O PDF oficial continua
-                disponível para conferência e download.
+                Este demonstrativo acompanha o CPF selecionado na simulação e resume o que o técnico
+                deve observar antes de orientar o produtor.
               </span>
             </div>
           </div>
@@ -1236,20 +1260,15 @@ function ReportModal({
           </section>
 
           <section style={{ marginTop: 24 }}>
-            <h3>Situação do CAR</h3>
-            <div
-              style={{
-                borderLeft: "6px solid var(--color-success-default, #168821)",
-                paddingLeft: 16,
-              }}
-            >
-              <strong style={{ color: "var(--color-success-default, #168821)", fontSize: 20 }}>
-                {report.status}
-              </strong>
+            <h3>Leitura operacional</h3>
+            <div style={{ borderLeft: `6px solid ${status.text}`, paddingLeft: 16 }}>
+              <strong style={{ color: status.text, fontSize: 20 }}>{status.label}</strong>
               <p style={mutedTextStyle}>
-                Em termos simples: esse cadastro tem informações suficientes para consulta
-                demonstrativa. Quando houver pendências, elas aparecem abaixo para orientar o
-                próximo passo.
+                {record?.status === "regular"
+                  ? "O cadastro não exige ação corretiva na simulação. O parceiro pode seguir com o atendimento."
+                  : record
+                    ? "Há pontos de atenção no cadastro. Use as pendências e etapas abaixo para explicar o próximo passo ao produtor."
+                    : "Consulta regional demonstrativa. Use o PDF para validar os dados do relatório público."}
               </p>
             </div>
             {record?.pendencias.length ? (
@@ -1267,6 +1286,49 @@ function ReportModal({
                 </div>
               </div>
             ) : null}
+            {steps.length > 0 && (
+              <div style={{ marginTop: 18 }}>
+                <p style={sectionEyebrowStyle}>Caminho recomendado</p>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {steps.map((step) => (
+                    <div
+                      key={step.label}
+                      style={{
+                        border: `1px solid ${step.color}30`,
+                        background: `${step.color}09`,
+                        borderRadius: 8,
+                        padding: 14,
+                        display: "flex",
+                        gap: 12,
+                      }}
+                    >
+                      <i
+                        className={`fas ${step.icon}`}
+                        style={{ color: step.color, marginTop: 3 }}
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <strong
+                          style={{
+                            display: "block",
+                            color: step.color,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.06em",
+                            fontSize: 12,
+                          }}
+                        >
+                          {step.label}
+                        </strong>
+                        <span style={{ color: "var(--color-secondary-06)", fontSize: 12 }}>
+                          {step.module}
+                        </span>
+                        <p style={{ ...mutedTextStyle, marginBottom: 0 }}>{step.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {municipio && (
               <p style={mutedTextStyle}>
                 A localização enviada aponta para {municipio.nome}/{municipio.uf}, código IBGE{" "}
