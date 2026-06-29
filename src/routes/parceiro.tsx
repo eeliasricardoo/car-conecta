@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import govBrLogo from "@/assets/govbr-logo.svg";
+import carProativoLogo from "@/assets/leaf_Car_Proativo.png";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
@@ -490,10 +491,7 @@ function LoginScreen({ onLogin }: { onLogin: (i: Institution) => void }) {
             <Link to="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
               <img src={govBrLogo} alt="Governo Federal" style={{ height: 32 }} />
               <span style={{ margin: "0 12px", borderLeft: "1px solid var(--color-secondary-03)", height: 24 }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontWeight: "bold", color: "var(--color-secondary-09)", fontSize: "1.1rem" }}>CAR</span>
-                <span style={{ fontStyle: "italic", color: "var(--color-primary-default)", fontWeight: "bold", fontSize: "1.1rem" }}>Proativo</span>
-              </div>
+              <img src={carProativoLogo} alt="CAR Proativo" style={{ height: 28 }} />
             </Link>
             <Link to="/" className="br-button secondary small" style={{ borderRadius: 999 }}>
               <i className="fas fa-arrow-left mr-2" aria-hidden="true" style={{ fontSize: 12 }} />
@@ -643,10 +641,7 @@ function PortalScreen({ institution, onLogout }: { institution: Institution; onL
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <img src={govBrLogo} alt="Governo Federal" style={{ height: 28 }} />
               <span style={{ borderLeft: "1px solid var(--color-secondary-03)", height: 24, margin: "0 4px" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontWeight: "bold", color: "var(--color-secondary-09)", fontSize: "1rem" }}>CAR</span>
-                <span style={{ fontStyle: "italic", color: "var(--color-primary-default)", fontWeight: "bold", fontSize: "1rem" }}>Proativo</span>
-              </div>
+              <img src={carProativoLogo} alt="CAR Proativo" style={{ height: 24 }} />
               {!isMobile && <span style={{ borderLeft: "1px solid var(--color-secondary-03)", height: 24, margin: "0 4px" }} />}
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{

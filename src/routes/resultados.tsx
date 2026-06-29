@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import govBrLogo from "@/assets/govbr-logo.svg";
+import carProativoLogo from "@/assets/leaf_Car_Proativo.png";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/resultados")({
@@ -84,10 +85,7 @@ function ResultadosNav() {
           <Link to="/" style={{ display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
             <img src={govBrLogo} alt="Governo Federal" style={{ height: 32 }} />
             <span className="br-divider vertical mx-3" style={{ height: 24, borderLeft: "1px solid var(--color-secondary-03)" }} />
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ fontWeight: "bold", color: "var(--color-secondary-09)", fontSize: "1.1rem" }}>CAR</span>
-              <span style={{ fontStyle: "italic", color: "var(--color-primary-default)", fontWeight: "bold", fontSize: "1.1rem" }}>Proativo</span>
-            </div>
+            <img src={carProativoLogo} alt="CAR Proativo" style={{ height: 28 }} />
           </Link>
           <div style={{ display: "flex", gap: 12 }}>
             <Link to="/" className="br-button secondary small" style={{ borderRadius: 999 }}>

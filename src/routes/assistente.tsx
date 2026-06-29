@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import govBrLogo from "@/assets/govbr-logo.svg";
+import carProativoLogo from "@/assets/leaf_Car_Proativo.png";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDiagnostico } from "@/hooks/use-diagnostico";
 import type { DiagnosticoResult } from "@/lib/services/diagnostico-engine";
@@ -341,7 +342,7 @@ function GovHeader({ onHome }: { onHome: () => void }) {
               className="br-divider vertical mx-1"
               style={{ height: 24, borderLeft: "1px solid var(--color-secondary-03)" }}
             />
-            <span style={{ color: "#168821" }}>CAR Proativo</span>
+            <img src={carProativoLogo} alt="CAR Proativo" style={{ height: 26 }} />
           </button>
         </div>
       </div>

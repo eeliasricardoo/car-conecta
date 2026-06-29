@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import govBrLogo from "@/assets/govbr-logo.svg";
+import carProativoLogo from "@/assets/leaf_Car_Proativo.png";
 
 export const Route = createFileRoute("/localizacao")({
   head: () => ({
@@ -309,12 +310,7 @@ function LocalizacaoNav() {
                 height: 24,
               }}
             />
-            <strong style={{ color: "var(--color-secondary-09)" }}>CAR</strong>
-            <strong
-              style={{ color: "var(--color-primary-default)", fontStyle: "italic", marginLeft: 4 }}
-            >
-              Proativo
-            </strong>
+            <img src={carProativoLogo} alt="CAR Proativo" style={{ height: 28 }} />
           </Link>
           <nav className="d-flex" style={{ gap: 8 }}>
             <Link to="/wiki" className="br-button secondary small" style={{ borderRadius: 999 }}>
