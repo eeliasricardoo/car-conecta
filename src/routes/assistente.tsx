@@ -183,7 +183,7 @@ function GovHeader({ onHome }: { onHome: () => void }) {
 }
 
 function DoubtChat() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<DoubtMessage[]>([
     {
@@ -1004,7 +1004,13 @@ function CarNumberPanel() {
 
 function MapPanel({ audience }: { audience: "agricultor" | "parceiro" }) {
   return (
-    <div className="br-card" style={{ borderRadius: 8, padding: 20 }}>
+    <div
+      style={{
+        padding: audience === "parceiro" ? 0 : 20,
+        background: "#fff",
+        borderRadius: audience === "parceiro" ? 0 : 8,
+      }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <strong style={{ display: "block", fontSize: 18 }}>
@@ -1233,11 +1239,14 @@ function PartnerFlow() {
 }
 
 function PartnerDashboard({ institution }: { institution: string }) {
+  const [activeTab, setActiveTab] = useState<"atendimento" | "widget">("atendimento");
   const [cpf, setCpf] = useState("107.282.101-00");
   const [submittedCpf, setSubmittedCpf] = useState<string | null>(null);
-  const [showWidget, setShowWidget] = useState(false);
+  const [copiedWidget, setCopiedWidget] = useState(false);
+  const [widgetName, setWidgetName] = useState("Crédito Rural");
+  const [widgetPosition, setWidgetPosition] = useState("bottom-right");
   const { data, isFetching } = useDiagnostico(submittedCpf);
-  const accountName = institution.includes("EMATER") ? "EMATER — Mato Grosso" : institution;
+  const accountName = institution.includes("EMATER") ? "EMATER MG" : institution;
 
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1246,130 +1255,371 @@ function PartnerDashboard({ institution }: { institution: string }) {
 
   const widgetSnippet = useMemo(
     () =>
-      `<script src="https://carproativo.gov.br/widget.js" data-parceiro="${institution}"></script>`,
-    [institution],
+      `<script src="https://carproativo.gov.br/widget.js"
+  data-parceiro="${institution}"
+  data-widget-name="${widgetName}"
+  data-position="${widgetPosition}">
+</script>`,
+    [institution, widgetName, widgetPosition],
   );
 
+  function copyWidgetSnippet() {
+    void navigator.clipboard?.writeText(widgetSnippet);
+    setCopiedWidget(true);
+    window.setTimeout(() => setCopiedWidget(false), 1800);
+  }
+
   return (
-    <main className="container-lg" style={{ padding: "42px 16px 96px" }}>
+    <main
+      style={{
+        padding: "48px 16px 96px",
+        background: "linear-gradient(180deg, var(--color-secondary-01, #f8f8f8) 0, #fff 260px)",
+      }}
+    >
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <section className="br-card" style={{ borderRadius: 8, marginBottom: 24 }}>
+        <section style={{ marginBottom: 40 }}>
           <span className="br-tag success" style={{ fontWeight: 700 }}>
             Conta parceira ativa
           </span>
           <h1
             style={{
-              margin: "16px 0 8px",
-              fontSize: "var(--font-size-scale-up-06, 2.5rem)",
+              margin: "18px 0 12px",
+              fontSize: "clamp(2.25rem, 4.5vw, 4rem)",
               lineHeight: 1.12,
               color: "var(--color-secondary-09)",
+              maxWidth: 820,
             }}
           >
-            Bem-vindo, {accountName}.
+            Boas Vindas {accountName}
           </h1>
           <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
             Seu perfil institucional está pronto para apoiar produtores no atendimento assistido:
-            consultar produtores em contexto autorizado, visualizar áreas no território e instalar o
-            widget no site da entidade.
+            consultar produtores em contexto autorizado, visualizar áreas no território e configurar
+            o widget do site em uma aba dedicada.
           </p>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
-              gap: 12,
-              marginTop: 22,
+              gap: 16,
+              marginTop: 28,
             }}
           >
             {[
               ["Perfil parceiro", "Atendimento técnico rural habilitado"],
               ["Área de atuação", "Mato Grosso e regiões demonstrativas"],
-              ["Canais", "Portal web, widget e WhatsApp"],
+              ["Operação", "Consultas, mapa territorial e orientação ao produtor"],
             ].map(([label, value]) => (
-              <div key={label} className="br-card" style={{ borderRadius: 8, padding: 16 }}>
+              <div
+                key={label}
+                style={{
+                  borderTop: "3px solid var(--color-primary-default, #1351b4)",
+                  paddingTop: 12,
+                }}
+              >
                 <span style={{ color: "var(--color-secondary-07)", fontSize: 13 }}>{label}</span>
-                <strong style={{ display: "block", marginTop: 4 }}>{value}</strong>
+                <strong style={{ display: "block", marginTop: 6, fontSize: 16 }}>{value}</strong>
               </div>
             ))}
           </div>
         </section>
-        <div className="br-card" style={{ borderRadius: 8 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-              gap: 18,
-              alignItems: "start",
-            }}
-          >
-            <div style={panelStyle}>
-              <strong style={{ display: "block", marginBottom: 12 }}>Buscar produtor</strong>
-              <form onSubmit={search} style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                <input
-                  value={cpf}
-                  onChange={(event) => setCpf(event.target.value)}
-                  style={inputStyle}
-                />
-                <button type="submit" style={primaryButtonStyle}>
-                  {isFetching ? "..." : "Buscar por CPF"}
+
+        <div className="br-tab" style={{ marginBottom: 32 }}>
+          <nav className="tab-nav" aria-label="Áreas do portal">
+            <ul>
+              {[
+                { id: "atendimento", label: "Atendimento", icon: "fa-headset" },
+                { id: "widget", label: "Widget do site", icon: "fa-code" },
+              ].map((tab) => {
+                const selected = activeTab === tab.id;
+                return (
+                  <li key={tab.id} className={`tab-item ${selected ? "active" : ""}`}>
+                    <button
+                      type="button"
+                      aria-selected={selected}
+                      onClick={() => setActiveTab(tab.id as "atendimento" | "widget")}
+                    >
+                      <i className={`fas ${tab.icon}`} aria-hidden="true" /> {tab.label}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+
+        {activeTab === "atendimento" && (
+          <section style={{ display: "grid", gap: 32 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <i className="fas fa-search" style={{ color: "#1351b4" }} aria-hidden="true" />
+                <h2 style={{ margin: 0, fontSize: 24 }}>Buscar produtor</h2>
+              </div>
+              <p style={{ ...mutedTextStyle, maxWidth: 620 }}>
+                Consulte um CPF em contexto autorizado para abrir o demonstrativo e orientar o
+                atendimento com dados claros.
+              </p>
+              <form
+                onSubmit={search}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1fr) auto",
+                  gap: 12,
+                  alignItems: "end",
+                  marginTop: 18,
+                  maxWidth: 640,
+                }}
+              >
+                <div className="br-input">
+                  <label htmlFor="partner-cpf">CPF do produtor</label>
+                  <input
+                    id="partner-cpf"
+                    value={cpf}
+                    onChange={(event) => setCpf(event.target.value)}
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+                <button type="submit" className="br-button primary" style={{ minHeight: 40 }}>
+                  {isFetching ? "Buscando..." : "Buscar CPF"}
                 </button>
               </form>
               {data && <DiagnosticSummary data={data} />}
             </div>
-            <div style={panelStyle}>
-              <strong style={{ display: "block", marginBottom: 12 }}>
-                Widget para site parceiro
-              </strong>
-              <button
-                type="button"
-                onClick={() => setShowWidget((value) => !value)}
+            <section>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <i
+                  className="fas fa-map-marked-alt"
+                  style={{ color: "#1351b4" }}
+                  aria-hidden="true"
+                />
+                <h2 style={{ margin: 0, fontSize: 24 }}>Território atendido</h2>
+              </div>
+              <p style={{ ...mutedTextStyle, maxWidth: 720 }}>
+                Filtre por UF, município ou número do CAR para visualizar a região de atendimento e
+                abrir detalhes do imóvel.
+              </p>
+              <div
                 style={{
-                  ...primaryButtonStyle,
-                  width: "100%",
-                  minHeight: 72,
-                  justifyContent: "center",
-                  fontSize: 18,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
+                  gap: 16,
+                  margin: "18px 0 20px",
                 }}
               >
-                <i className="fas fa-code" aria-hidden="true" />
-                Adicionar Widget no site
-              </button>
-              {showWidget && <pre style={codeBlockStyle}>{widgetSnippet}</pre>}
-            </div>
-          </div>
-          <div style={{ marginTop: 22 }}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
-                gap: 12,
-                marginBottom: 14,
-              }}
-            >
-              <label style={labelStyle}>
-                UF
-                <select style={inputStyle} defaultValue="PE">
-                  <option value="PE">Pernambuco</option>
-                  <option value="MT">Mato Grosso</option>
-                </select>
-              </label>
-              <label style={labelStyle}>
-                Município
-                <input style={inputStyle} value="Serra Talhada" readOnly />
-              </label>
-              <label style={labelStyle}>
-                Número de registro no CAR
-                <input
-                  style={inputStyle}
-                  value="PE-2613909-4B8F858952E8403AA02C95B630239DF7"
-                  readOnly
-                />
-              </label>
-            </div>
-          </div>
-          <MapPanel audience="parceiro" />
-        </div>
+                <div className="br-input">
+                  <label htmlFor="partner-uf">UF</label>
+                  <input id="partner-uf" value="Pernambuco" readOnly />
+                </div>
+                <div className="br-input">
+                  <label htmlFor="partner-city">Município</label>
+                  <input id="partner-city" value="Serra Talhada" readOnly />
+                </div>
+                <div className="br-input">
+                  <label htmlFor="partner-car">Número de registro no CAR</label>
+                  <input
+                    id="partner-car"
+                    value="PE-2613909-4B8F858952E8403AA02C95B630239DF7"
+                    readOnly
+                  />
+                </div>
+              </div>
+              <MapPanel audience="parceiro" />
+            </section>
+          </section>
+        )}
+
+        {activeTab === "widget" && (
+          <WidgetBuilderTab
+            widgetName={widgetName}
+            widgetPosition={widgetPosition}
+            widgetSnippet={widgetSnippet}
+            copied={copiedWidget}
+            onNameChange={setWidgetName}
+            onPositionChange={setWidgetPosition}
+            onCopy={copyWidgetSnippet}
+          />
+        )}
       </div>
     </main>
+  );
+}
+
+function WidgetBuilderTab({
+  widgetName,
+  widgetPosition,
+  widgetSnippet,
+  copied,
+  onNameChange,
+  onPositionChange,
+  onCopy,
+}: {
+  widgetName: string;
+  widgetPosition: string;
+  widgetSnippet: string;
+  copied: boolean;
+  onNameChange: (value: string) => void;
+  onPositionChange: (value: string) => void;
+  onCopy: () => void;
+}) {
+  const widgetIsRight = widgetPosition === "bottom-right";
+
+  return (
+    <section
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
+        gap: 32,
+        alignItems: "start",
+      }}
+    >
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+          <i className="fas fa-code" style={{ color: "#1351b4" }} aria-hidden="true" />
+          <h2 style={{ margin: 0, fontSize: 24 }}>Gerar widget do site</h2>
+        </div>
+        <p style={{ ...mutedTextStyle, maxWidth: 620 }}>
+          Configure o acionador do CAR Proativo para instalar no site da instituição. A prévia ao
+          lado mostra como o botão aparece para o produtor.
+        </p>
+
+        <div style={{ display: "grid", gap: 16, marginTop: 22 }}>
+          <div className="br-input">
+            <label htmlFor="widget-name">Nome exibido no botão</label>
+            <input
+              id="widget-name"
+              value={widgetName}
+              onChange={(event) => onNameChange(event.target.value)}
+            />
+          </div>
+          <div className="br-select">
+            <label htmlFor="widget-position">Posição na página</label>
+            <select
+              id="widget-position"
+              value={widgetPosition}
+              onChange={(event) => onPositionChange(event.target.value)}
+            >
+              <option value="bottom-right">Canto inferior direito</option>
+              <option value="bottom-left">Canto inferior esquerdo</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 26 }}>
+          <div
+            style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
+          >
+            <h3 style={{ margin: 0, fontSize: 18 }}>Código de instalação</h3>
+            <button type="button" className="br-button secondary small" onClick={onCopy}>
+              <i className="fas fa-copy" aria-hidden="true" />
+              {copied ? "Copiado" : "Copiar código"}
+            </button>
+          </div>
+          <pre style={codeBlockStyle}>{widgetSnippet}</pre>
+        </div>
+      </div>
+
+      <div>
+        <h3 style={{ margin: "0 0 14px", fontSize: 18 }}>Preview</h3>
+        <div
+          style={{
+            minHeight: 720,
+            borderRadius: 8,
+            border: "1px solid var(--color-secondary-03)",
+            background: "#fff",
+            position: "relative",
+            overflow: "hidden",
+            display: "flex",
+            justifyContent: widgetIsRight ? "flex-end" : "flex-start",
+            alignItems: "center",
+            padding: 32,
+          }}
+        >
+          <div
+            style={{
+              width: "min(100%, 430px)",
+              minHeight: 560,
+              background: "#fff",
+              borderRadius: 12,
+              boxShadow: "0 18px 48px rgba(15,23,42,0.18)",
+              overflow: "hidden",
+              border: "1px solid var(--color-secondary-03)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ background: "#00a000", color: "#fff", padding: "18px 20px" }}>
+              <strong style={{ display: "block", fontSize: 20 }}>CAR Proativo</strong>
+              <span style={{ fontSize: 13 }}>Seu facilitador de crédito rural</span>
+            </div>
+            <div
+              style={{
+                padding: 18,
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+                flex: 1,
+              }}
+            >
+              <div
+                style={{
+                  background: "#f8fafc",
+                  borderRadius: 8,
+                  padding: 14,
+                  color: "#374151",
+                  fontSize: 14,
+                  lineHeight: 1.45,
+                }}
+              >
+                Olá, posso ajudar com consulta do CAR, localização e dúvidas sobre crédito rural.
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {["O que é o CAR?", "Consultar por CPF", "Enviar localização"].map((label) => (
+                  <span key={label} style={chipStyle}>
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <div style={{ marginTop: "auto" }}>
+                <div className="br-input">
+                  <label htmlFor="widget-preview-input">Digite sua dúvida</label>
+                  <input id="widget-preview-input" placeholder="Como o CAR ajuda no crédito?" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            aria-label={`Abrir widget ${widgetName}`}
+            style={{
+              position: "absolute",
+              bottom: 22,
+              [widgetIsRight ? "right" : "left"]: 22,
+              width: 86,
+              height: 86,
+              borderRadius: 26,
+              border: 0,
+              background: "#34c759",
+              color: "#fff",
+              boxShadow: "0 16px 36px rgba(22,136,33,0.28)",
+              fontWeight: 900,
+              lineHeight: 1.05,
+            }}
+          >
+            <i
+              className="fas fa-coins"
+              aria-hidden="true"
+              style={{
+                display: "block",
+                color: "#ffea00",
+                fontSize: 20,
+                marginBottom: 4,
+              }}
+            />
+            {widgetName}
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 
